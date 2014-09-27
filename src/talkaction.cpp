@@ -19,6 +19,7 @@
 
 #include "otpch.h"
 
+#include <fstream>
 #include "player.h"
 #include "talkaction.h"
 #include "pugicast.h"
@@ -104,6 +105,31 @@ TalkActionResult_t TalkActions::playerSaySpell(Player* player, SpeakClasses type
 			}
 		}
 
+		if (talkAction->getAccess() > player->getGroup()->id) {
+			return TALKACTION_CONTINUE;
+		}
+
+		if (talkAction->getAccountType() > player->getAccountType()) {
+			return TALKACTION_CONTINUE;
+		}
+
+		if (talkAction->getLogged()) {
+			player->sendTextMessage(MESSAGE_STATUS_CONSOLE_RED, words);
+
+			std::ostringstream logFile;
+			logFile << "data/logs/" << player->getName() << " commands.log";
+			std::ofstream out(logFile.str(), std::ios::app);
+			if (out.is_open()) {
+				time_t ticks = time(nullptr);
+				const tm* now = localtime(&ticks);
+				char buf[32];
+				strftime(buf, sizeof(buf), "%d/%m/%Y %H:%M", now);
+
+				out << '[' << buf << "] " << words << std::endl;
+				out.close();
+			}
+		}
+
 		if (talkAction->executeSay(player, talkactionWords, param, type)) {
 			return TALKACTION_CONTINUE;
 		} else {
@@ -135,6 +161,21 @@ bool TalkAction::configureEvent(const pugi::xml_node& node)
 	pugi::xml_attribute separatorAttribute = node.attribute("separator");
 	if (separatorAttribute) {
 		separator = pugi::cast<char>(separatorAttribute.value());
+	}
+
+	pugi::xml_attribute accessAttribute = node.attribute("groupId");
+	if (accessAttribute) {
+		access = pugi::cast<uint32_t>(accessAttribute.value());
+	}
+
+	pugi::xml_attribute accountTypeAttribute = node.attribute("accountType");
+	if (accountTypeAttribute) {
+		accountType = (AccountType_t)pugi::cast<uint32_t>(accountTypeAttribute.value());
+	}
+
+	pugi::xml_attribute logAttribute = node.attribute("log");
+	if (logAttribute) {
+		logged = booleanString(logAttribute.as_string());
 	}
 
 	words = wordsAttribute.as_string();
