@@ -23,6 +23,7 @@
 #include "luascript.h"
 #include "baseevents.h"
 #include "enums.h"
+#include "tile.h"
 
 enum CreatureEventType_t {
 	CREATURE_EVENT_NONE,
@@ -37,7 +38,9 @@ enum CreatureEventType_t {
 	CREATURE_EVENT_TEXTEDIT,
 	CREATURE_EVENT_HEALTHCHANGE,
 	CREATURE_EVENT_MANACHANGE,
-	CREATURE_EVENT_EXTENDED_OPCODE // otclient additional network opcodes
+	CREATURE_EVENT_EXTENDED_OPCODE, // otclient additional network opcodes
+	CREATURE_EVENT_COMBAT,
+	CREATURE_EVENT_COMBATAREA
 };
 
 class CreatureEvent;
@@ -103,6 +106,8 @@ class CreatureEvent : public Event
 		void executeHealthChange(Creature* creature, Creature* attacker, CombatDamage& damage);
 		void executeManaChange(Creature* creature, Creature* attacker, int32_t& manaChange, CombatOrigin origin);
 		void executeExtendedOpcode(Player* player, uint8_t opcode, const std::string& buffer);
+		bool executeCombat(Creature* creature, Creature* target, bool aggressive);
+		bool executeCombatArea(Creature* creature, Tile* tile, bool aggressive);
 		//
 
 	protected:

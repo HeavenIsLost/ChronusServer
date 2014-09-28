@@ -3826,7 +3826,7 @@ bool Game::combatBlockHit(CombatType_t combatType, Creature* attacker, Creature*
 	SpectatorVec list;
 	getSpectators(list, targetPos, false, true);
 
-	if (!target->isAttackable() || Combat::canDoCombat(attacker, target) != RET_NOERROR) {
+	if (!target->isAttackable() || Combat::canDoCombat(attacker, target, true) != RET_NOERROR) {
 		if (!target->isInGhostMode()) {
 			addMagicEffect(list, targetPos, CONST_ME_POFF);
 		}
@@ -4066,7 +4066,7 @@ bool Game::combatChangeHealth(Creature* attacker, Creature* target, CombatDamage
 		SpectatorVec list;
 		getSpectators(list, targetPos, true, true);
 
-		if (!target->isAttackable() || Combat::canDoCombat(attacker, target) != RET_NOERROR) {
+		if (!target->isAttackable() || Combat::canDoCombat(attacker, target, true) != RET_NOERROR) {
 			addMagicEffect(list, targetPos, CONST_ME_POFF);
 			return true;
 		}
@@ -4295,7 +4295,7 @@ bool Game::combatChangeMana(Creature* attacker, Creature* target, int32_t manaCh
 		target->changeMana(manaChange);
 	} else {
 		const Position& targetPos = target->getPosition();
-		if (!target->isAttackable() || Combat::canDoCombat(attacker, target) != RET_NOERROR) {
+		if (!target->isAttackable() || Combat::canDoCombat(attacker, target, true) != RET_NOERROR) {
 			addMagicEffect(targetPos, CONST_ME_POFF);
 			return false;
 		}

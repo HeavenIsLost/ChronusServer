@@ -195,6 +195,10 @@ bool CreatureEvent::configureEvent(const pugi::xml_node& node)
 		m_type = CREATURE_EVENT_MANACHANGE;
 	} else if (tmpStr == "extendedopcode") {
 		m_type = CREATURE_EVENT_EXTENDED_OPCODE;
+	} else if (tmpStr == "combat") {
+		m_type = CREATURE_EVENT_COMBAT;
+	} else if (tmpStr == "combatarea") {
+		m_type = CREATURE_EVENT_COMBATAREA;
 	} else {
 		std::cout << "[Error - CreatureEvent::configureEvent] Invalid type for creature event: " << m_eventName << std::endl;
 		return false;
@@ -243,6 +247,12 @@ std::string CreatureEvent::getScriptEventName()
 
 		case CREATURE_EVENT_EXTENDED_OPCODE:
 			return "onExtendedOpcode";
+
+		case CREATURE_EVENT_COMBAT:
+			return "onCombat";
+
+		case CREATURE_EVENT_COMBATAREA:
+			return "onCombatArea";
 
 		case CREATURE_EVENT_NONE:
 		default:
@@ -585,4 +595,46 @@ void CreatureEvent::executeExtendedOpcode(Player* player, uint8_t opcode, const 
 	LuaScriptInterface::pushString(L, buffer);
 
 	m_scriptInterface->callVoidFunction(3);
+}
+
+bool CreatureEvent::executeCombat(Creature* creature, Creature* target, bool aggressive)
+{
+	//onCombat(cid, target, isAgressive)
+	if (!m_scriptInterface->reserveScriptEnv()) {
+		std::cout << "[Error - CreatureEvent::executeOnCombat] Call stack overflow" << std::endl;
+		return false;
+	}
+
+	ScriptEnvironment* env = m_scriptInterface->getScriptEnv();
+	env->setScriptId(m_scriptId, m_scriptInterface);
+
+	lua_State* L = m_scriptInterface->getLuaState();
+
+	m_scriptInterface->pushFunction(m_scriptId);
+	lua_pushnumber(L, creature->getID());
+	lua_pushnumber(L, target->getID());
+	lua_pushboolean(L, aggressive);
+
+	return m_scriptInterface->callFunction(3);
+}
+
+bool CreatureEvent::executeCombatArea(Creature* creature, Tile* tile, bool aggressive)
+{
+	//onCombatArea(cid, position, isAgressive)
+	if (!m_scriptInterface->reserveScriptEnv()) {
+		std::cout << "[Error - CreatureEvent::executeCombatArea] Call stack overflow" << std::endl;
+		return false;
+	}
+
+	ScriptEnvironment* env = m_scriptInterface->getScriptEnv();
+	env->setScriptId(m_scriptId, m_scriptInterface);
+
+	lua_State* L = m_scriptInterface->getLuaState();
+
+	m_scriptInterface->pushFunction(m_scriptId);
+	lua_pushnumber(L, creature->getID());
+	m_scriptInterface->pushPosition(L, tile->getPosition(), 0);
+	lua_pushboolean(L, aggressive);
+
+	return m_scriptInterface->callFunction(3);
 }
