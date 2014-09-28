@@ -9612,7 +9612,6 @@ int32_t LuaScriptInterface::luaPlayerSetRate(lua_State* L)
 	if (player) {
 		uint16_t skillType = getNumber<uint32_t>(L, 2);
 		double value = getNumber<double>(L, 3);
-
 		if ((skillType >= SKILL_FIRST) && (skillType <= SKILL_LEVEL)) {
 			player->setRate((skills_t)skillType, value);
 			pushBoolean(L, true);
