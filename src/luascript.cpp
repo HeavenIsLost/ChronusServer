@@ -1574,6 +1574,7 @@ void LuaScriptInterface::registerFunctions()
 	registerEnum(SKILL_SHIELD)
 	registerEnum(SKILL_FISHING)
 	registerEnum(SKILL_MAGLEVEL)
+	registerEnum(SKILL_LEVEL)
 	registerEnum(SKILLVALUE_LEVEL)
 
 	registerEnum(SKULL_NONE)
@@ -2233,6 +2234,9 @@ void LuaScriptInterface::registerFunctions()
 	registerMethod("Player", "getContainerId", LuaScriptInterface::luaPlayerGetContainerId);
 	registerMethod("Player", "getContainerById", LuaScriptInterface::luaPlayerGetContainerById);
 	registerMethod("Player", "getContainerIndex", LuaScriptInterface::luaPlayerGetContainerIndex);
+
+	registerMethod("Player", "setRate", LuaScriptInterface::luaPlayerSetRate);
+	registerMethod("Player", "getRate", LuaScriptInterface::luaPlayerGetRate);
 
 	// Monster
 	registerClass("Monster", "Creature", LuaScriptInterface::luaMonsterCreate);
@@ -9579,6 +9583,46 @@ int32_t LuaScriptInterface::luaPlayerGetContainerIndex(lua_State* L)
 	} else {
 		lua_pushnil(L);
 	}
+	return 1;
+}
+
+
+int32_t LuaScriptInterface::luaPlayerGetRate(lua_State* L)
+{
+	// player:getRate(skillType)
+	Player* player = getUserdata<Player>(L, 1);
+	if (player) {
+		uint16_t skillType = getNumber<uint32_t>(L, 2);
+		if ((skillType >= SKILL_FIRST) && (skillType <= SKILL_LEVEL)) {
+			lua_pushnumber(L, player->getRate((skills_t)skillType));
+		} else {
+			pushBoolean(L, false);
+		}
+	} else {
+		pushBoolean(L, false);
+	}
+
+	return 1;
+}
+
+int32_t LuaScriptInterface::luaPlayerSetRate(lua_State* L)
+{
+	// player:setRate(skillType, value)
+	Player* player = getUserdata<Player>(L, 1);
+	if (player) {
+		uint16_t skillType = getNumber<uint32_t>(L, 2);
+		double value = getNumber<double>(L, 3);
+
+		if ((skillType >= SKILL_FIRST) && (skillType <= SKILL_LEVEL)) {
+			player->setRate((skills_t)skillType, value);
+			pushBoolean(L, true);
+		} else {
+			pushBoolean(L, false);
+		}
+	} else {
+		pushBoolean(L, false);
+	}
+
 	return 1;
 }
 

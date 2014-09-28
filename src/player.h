@@ -1160,6 +1160,13 @@ class Player : public Creature, public Cylinder
 		void forgetInstantSpell(const std::string& name);
 		bool hasLearnedInstantSpell(const std::string& name) const;
 
+		double getRate(skills_t skill) {
+			return rates[skill];
+		}
+
+		void setRate(skills_t skill, double value) {
+			rates[skill] = value;
+		}
 	protected:
 		void checkTradeState(const Item* item);
 		bool hasCapacity(const Item* item, uint32_t count) const;
@@ -1327,6 +1334,8 @@ class Player : public Creature, public Cylinder
 		bool isConnecting;
 		bool addAttackSkillPoint;
 		bool inventoryAbilities[CONST_SLOT_LAST + 1];
+
+		double rates[SKILL_LEVEL + 1];
 
 		static uint32_t playerAutoID;
 
