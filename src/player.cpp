@@ -151,6 +151,14 @@ Player::Player(ProtocolGame* p) :
 		varStats[i] = 0;
 	}
 
+	for (int32_t i = SKILL_FIRST; i <= SKILL_LAST; ++i) {
+		rates[i] = g_config.getNumber(ConfigManager::RATE_SKILL);
+	}
+
+	rates[SKILL_MAGLEVEL] = g_config.getNumber(ConfigManager::RATE_MAGIC);
+
+	rates[SKILL_LEVEL] = g_config.getNumber(ConfigManager::RATE_EXPERIENCE);
+
 	maxDepotItems = 1000;
 	maxVipEntries = 20;
 
@@ -1801,7 +1809,7 @@ void Player::addExperience(Creature* source, uint64_t exp, bool sendText/* = fal
 	}
 
 	if (applyMultiplier) {
-		exp *= g_game.getExperienceStage(level);
+		exp *= (rates[SKILL_LEVEL] == g_config.getNumber(ConfigManager::RATE_EXPERIENCE) ? g_game.getExperienceStage(level) : rates[SKILL_LEVEL]);
 	}
 
 	if (applyStaminaChange && g_config.getBoolean(ConfigManager::STAMINA_SYSTEM)) {
@@ -1987,7 +1995,7 @@ void Player::onBlockHit()
 		--shieldBlockCount;
 
 		if (hasShield()) {
-			addSkillAdvance(SKILL_SHIELD, g_config.getNumber(ConfigManager::RATE_SKILL));
+			addSkillAdvance(SKILL_SHIELD, rates[SKILL_SHIELD]);
 		}
 	}
 }

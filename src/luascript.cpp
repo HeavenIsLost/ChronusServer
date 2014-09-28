@@ -1574,6 +1574,7 @@ void LuaScriptInterface::registerFunctions()
 	registerEnum(SKILL_SHIELD)
 	registerEnum(SKILL_FISHING)
 	registerEnum(SKILL_MAGLEVEL)
+	registerEnum(SKILL_LEVEL)
 	registerEnum(SKILLVALUE_LEVEL)
 
 	registerEnum(SKULL_NONE)
