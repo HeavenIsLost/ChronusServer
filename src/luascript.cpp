@@ -2238,6 +2238,8 @@ void LuaScriptInterface::registerFunctions()
 	registerMethod("Player", "setRate", LuaScriptInterface::luaPlayerSetRate);
 	registerMethod("Player", "getRate", LuaScriptInterface::luaPlayerGetRate);
 
+	registerMethod("Player", "getItemByClientPos", LuaScriptInterface::luaPlayerGetItemByClientPos);
+
 	// Monster
 	registerClass("Monster", "Creature", LuaScriptInterface::luaMonsterCreate);
 	registerMetaMethod("Monster", "__eq", LuaScriptInterface::luaUserdataCompare);
@@ -9621,6 +9623,29 @@ int32_t LuaScriptInterface::luaPlayerSetRate(lua_State* L)
 		}
 	} else {
 		pushBoolean(L, false);
+	}
+
+	return 1;
+}
+
+int32_t LuaScriptInterface::luaPlayerGetItemByClientPos(lua_State* L)
+{
+	// player:getItemByClientPos( position )
+	Player* player = getUserdata<Player>(L, 1);
+	if (player) {
+
+		PositionEx pos = getPosition(L, 2);
+
+		Item* item = dynamic_cast<Item*>(g_game.internalGetThing(player, pos, pos.stackpos, 0, STACKPOS_USE));
+
+		if (item) {
+			pushUserdata<Item>(L, item);
+			setMetatable(L, -1, "Item");
+		} else {
+			lua_pushnil(L);
+		}
+	} else {
+		lua_pushnil(L);
 	}
 
 	return 1;
