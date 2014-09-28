@@ -606,7 +606,7 @@ int32_t WeaponMelee::getElementDamage(const Player* player, const Creature*, con
 	return -normal_random(0, static_cast<int32_t>(maxValue * player->getVocation()->meleeDamageMultiplier));
 }
 
-int32_t WeaponMelee::getWeaponDamage(const Player* player, const Creature*, const Item* item, bool maxDamage /*= false*/) const
+int32_t WeaponMelee::getWeaponDamage(const Player* player, const Creature* target, const Item* item, bool maxDamage /*= false*/) const
 {
 	int32_t attackSkill = player->getWeaponSkill(item);
 	int32_t attackValue = std::max<int32_t>(0, item->getAttack());
@@ -617,7 +617,16 @@ int32_t WeaponMelee::getWeaponDamage(const Player* player, const Creature*, cons
 		return -maxValue;
 	}
 
-	return -normal_random(0, maxValue);
+	int32_t minValue = 0;
+
+	if (target->getPlayer()){
+		minValue = static_cast<int32_t>(std::ceil(maxDamage * 0.1));
+	}
+	else {
+		minValue = static_cast<int32_t>(std::ceil(maxDamage * 0.2));
+	}
+
+	return -normal_random(minValue, maxValue);
 }
 
 WeaponDistance::WeaponDistance(LuaScriptInterface* _interface) :
@@ -902,9 +911,9 @@ int32_t WeaponDistance::getElementDamage(const Player* player, const Creature* t
 	int32_t maxValue = Weapons::getMaxWeaponDamage(player->getLevel(), attackSkill, attackValue, attackFactor);
 	if (target) {
 		if (target->getPlayer()) {
-			minValue = static_cast<int32_t>(std::ceil(player->getLevel() * 0.1));
+			minValue = static_cast<int32_t>(std::ceil(maxValue * 0.1));
 		} else {
-			minValue = static_cast<int32_t>(std::ceil(player->getLevel() * 0.2));
+			minValue = static_cast<int32_t>(std::ceil(maxValue * 0.2));
 		}
 	}
 
@@ -933,9 +942,9 @@ int32_t WeaponDistance::getWeaponDamage(const Player* player, const Creature* ta
 	int32_t minValue;
 	if (target) {
 		if (target->getPlayer()) {
-			minValue = static_cast<int32_t>(std::ceil(player->getLevel() * 0.1));
+			minValue = static_cast<int32_t>(std::ceil(maxValue * 0.1));
 		} else {
-			minValue = static_cast<int32_t>(std::ceil(player->getLevel() * 0.2));
+			minValue = static_cast<int32_t>(std::ceil(maxValue * 0.2));
 		}
 	} else {
 		minValue = 0;
