@@ -649,9 +649,7 @@ void Creature::onCreatureMove(const Creature* creature, const Tile* newTile, con
 	}
 
 	if (creature == attackedCreature || (creature == this && attackedCreature)) {
-		if (newPos.z != oldPos.z || !canSee(attackedCreature->getPosition())) {
-			onCreatureDisappear(attackedCreature, false);
-		} else {
+		if (newPos.z == oldPos.z && canSee(attackedCreature->getPosition())) {
 			if (hasExtraSwing()) {
 				//our target is moving lets see if we can get in hit
 				g_dispatcher.addTask(createTask(std::bind(&Game::checkCreatureAttack, &g_game, getID())));
@@ -659,6 +657,19 @@ void Creature::onCreatureMove(const Creature* creature, const Tile* newTile, con
 
 			if (newTile->getZone() != oldTile->getZone()) {
 				onAttackedCreatureChangeZone(attackedCreature->getZone());
+			}
+		}
+		else{
+			if (this->getPlayer()) {
+
+				Position creaturePos = attackedCreature->getPosition();
+				Position dest(creaturePos.x, creaturePos.y, newPos.z);
+
+				if (!canSee(dest)) {
+					onCreatureDisappear(attackedCreature, false);
+				}
+			} else {
+				onCreatureDisappear(attackedCreature, false);
 			}
 		}
 	}
