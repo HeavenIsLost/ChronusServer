@@ -143,6 +143,9 @@ TalkAction::TalkAction(LuaScriptInterface* _interface) :
 	Event(_interface)
 {
 	separator = '"';
+	access = 0;
+	logged = false;
+	accountType = AccountType_t::ACCOUNT_TYPE_NORMAL;
 }
 
 TalkAction::~TalkAction()
