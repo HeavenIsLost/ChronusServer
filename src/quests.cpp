@@ -140,9 +140,19 @@ bool Quest::isStarted(Player* player) const
 		return false;
 	}
 
-	int32_t value;
-	if (!player->getStorageValue(startStorageID, value) || value < startStorageValue) {
-		return false;
+	if (startStorageID == 0) {
+		if (getMissionsCount(player) == 0) {
+			return false;
+		}
+		else {
+			return true;
+		}
+	}
+	else {
+		int32_t value;
+		if (!player->getStorageValue(startStorageID, value) || value < startStorageValue) {
+			return false;
+		}
 	}
 
 	return true;
