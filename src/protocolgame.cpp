@@ -442,6 +442,8 @@ void ProtocolGame::parsePacket(NetworkMessage& msg)
 		return;
 	}
 
+	msg.get<uint32_t>();
+
 	uint8_t recvbyte = msg.GetByte();
 
 	if (!player) {
