@@ -56,7 +56,7 @@
 
 extern ConfigManager g_config;
 extern Actions* g_actions;
-extern Chat g_chat;
+extern Chat* g_chat;
 extern TalkActions* g_talkActions;
 extern Spells* g_spells;
 extern Vocations g_vocations;
@@ -147,7 +147,7 @@ void Game::setGameState(GameState_t newState)
 			loadExperienceStages();
 
 			groups.load();
-			g_chat.load();
+			g_chat->load();
 
 			Spawns::getInstance()->startup();
 
@@ -1934,7 +1934,7 @@ void Game::playerCreatePrivateChannel(uint32_t playerId)
 		return;
 	}
 
-	ChatChannel* channel = g_chat.createChannel(*player, CHANNEL_PRIVATE);
+	ChatChannel* channel = g_chat->createChannel(*player, CHANNEL_PRIVATE);
 	if (!channel || !channel->addUser(*player)) {
 		return;
 	}
@@ -1949,7 +1949,7 @@ void Game::playerChannelInvite(uint32_t playerId, const std::string& name)
 		return;
 	}
 
-	PrivateChatChannel* channel = g_chat.getPrivateChannel(*player);
+	PrivateChatChannel* channel = g_chat->getPrivateChannel(*player);
 	if (!channel) {
 		return;
 	}
@@ -1973,7 +1973,7 @@ void Game::playerChannelExclude(uint32_t playerId, const std::string& name)
 		return;
 	}
 
-	PrivateChatChannel* channel = g_chat.getPrivateChannel(*player);
+	PrivateChatChannel* channel = g_chat->getPrivateChannel(*player);
 	if (!channel) {
 		return;
 	}
@@ -2007,7 +2007,7 @@ void Game::playerOpenChannel(uint32_t playerId, uint16_t channelId)
 		return;
 	}
 
-	ChatChannel* channel = g_chat.addUserToChannel(*player, channelId);
+	ChatChannel* channel = g_chat->addUserToChannel(*player, channelId);
 	if (!channel) {
 		return;
 	}
@@ -2030,7 +2030,7 @@ void Game::playerCloseChannel(uint32_t playerId, uint16_t channelId)
 		return;
 	}
 
-	g_chat.removeUserFromChannel(*player, channelId);
+	g_chat->removeUserFromChannel(*player, channelId);
 }
 
 void Game::playerOpenPrivateChannel(uint32_t playerId, std::string& receiver)
@@ -3465,7 +3465,7 @@ void Game::playerSay(uint32_t playerId, uint16_t channelId, SpeakClasses type,
 		case TALKTYPE_CHANNEL_O:
 		case TALKTYPE_CHANNEL_Y:
 		case TALKTYPE_CHANNEL_R1:
-			g_chat.talkToChannel(*player, type, text, channelId);
+			g_chat->talkToChannel(*player, type, text, channelId);
 			break;
 
 		case TALKTYPE_PRIVATE_PN:
@@ -5950,7 +5950,7 @@ bool Game::reloadInfo(ReloadType type)
 			result = g_events->load();
 			break;
 		case RELOADTYPE_CHATCHANNELS:
-			result = g_chat.load();
+			result = g_chat->load();
 			break;
 		default:
 			std::cout << "[Error - Game::reloadInfo] Reload type not found: " << type << std::endl;
