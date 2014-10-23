@@ -60,6 +60,8 @@ Monster::Monster(MonsterType* _mtype) :
 	defaultOutfit = mType->outfit;
 	currentOutfit = mType->outfit;
 
+	skull = mType->skull;
+
 	health = mType->health;
 	healthMax = mType->healthMax;
 	baseSpeed = mType->baseSpeed;
@@ -776,8 +778,6 @@ void Monster::doAttacking(uint32_t interval)
 	}
 
 	bool updateLook = true;
-
-	resetTicks = interval != 0;
 	attackTicks += interval;
 
 	const Position& myPos = getPosition();
@@ -816,7 +816,7 @@ void Monster::doAttacking(uint32_t interval)
 		updateLookDirection();
 	}
 
-	if (resetTicks) {
+	if (interval != 0) {
 		attackTicks = 0;
 	}
 }
@@ -853,7 +853,6 @@ bool Monster::canUseSpell(const Position& pos, const Position& targetPos,
 
 	if (!sb.isMelee || !extraMeleeAttack) {
 		if (sb.speed > attackTicks) {
-			resetTicks = false;
 			return false;
 		}
 
@@ -909,7 +908,7 @@ void Monster::onThinkTarget(uint32_t interval)
 
 void Monster::onThinkDefense(uint32_t interval)
 {
-	resetTicks = true;
+	bool resetTicks = true;
 	defenseTicks += interval;
 
 	for (const spellBlock_t& spellBlock : mType->spellDefenseList) {

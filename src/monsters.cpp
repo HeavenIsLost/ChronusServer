@@ -72,6 +72,8 @@ void MonsterType::reset()
 	outfit.lookMount = 0;
 	lookcorpse = 0;
 
+	skull = SKULL_NONE;
+
 	conditionImmunities = 0;
 	damageImmunities = 0;
 	race = RACE_BLOOD;
@@ -591,7 +593,7 @@ bool Monsters::deserializeSpell(const pugi::xml_node& node, spellBlock_t& sb, co
 			if ((attr = node.attribute("monster"))) {
 				MonsterType* mType = g_monsters.getMonsterType(attr.as_string());
 				if (mType) {
-					ConditionOutfit* condition = dynamic_cast<ConditionOutfit*>(Condition::createCondition(CONDITIONID_COMBAT, CONDITION_OUTFIT, duration, 0));
+					ConditionOutfit* condition = static_cast<ConditionOutfit*>(Condition::createCondition(CONDITIONID_COMBAT, CONDITION_OUTFIT, duration, 0));
 					condition->setOutfit(mType->outfit);
 					combat->setParam(COMBAT_PARAM_AGGRESSIVE, 0);
 					combat->setCondition(condition);
@@ -600,7 +602,7 @@ bool Monsters::deserializeSpell(const pugi::xml_node& node, spellBlock_t& sb, co
 				Outfit_t outfit;
 				outfit.lookTypeEx = pugi::cast<uint16_t>(attr.value());
 
-				ConditionOutfit* condition = dynamic_cast<ConditionOutfit*>(Condition::createCondition(CONDITIONID_COMBAT, CONDITION_OUTFIT, duration, 0));
+				ConditionOutfit* condition = static_cast<ConditionOutfit*>(Condition::createCondition(CONDITIONID_COMBAT, CONDITION_OUTFIT, duration, 0));
 				condition->setOutfit(outfit);
 				combat->setParam(COMBAT_PARAM_AGGRESSIVE, 0);
 				combat->setCondition(condition);
@@ -815,6 +817,10 @@ bool Monsters::loadMonster(const std::string& file, const std::string& monster_n
 
 	if ((attr = monsterNode.attribute("manacost"))) {
 		mType->manaCost = pugi::cast<uint32_t>(attr.value());
+	}
+
+	if ((attr = monsterNode.attribute("skull"))) {
+		mType->skull = getSkullType(attr.as_string());
 	}
 
 	if ((attr = monsterNode.attribute("script"))) {

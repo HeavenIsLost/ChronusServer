@@ -172,7 +172,6 @@ Player::Player(ProtocolGame* p) :
 	idleTime = 0;
 
 	skullTicks = 0;
-	skull = SKULL_NONE;
 	setParty(nullptr);
 
 	bankBalance = 0;
@@ -191,6 +190,8 @@ Player::Player(ProtocolGame* p) :
 	nextUseStaminaTime = 0;
 
 	lastQuestlogUpdate = 0;
+
+	inventoryWeight = 0.00;
 }
 
 Player::~Player()
@@ -581,14 +582,15 @@ uint16_t Player::getClientIcons() const
 
 void Player::updateInventoryWeight()
 {
-	if (!hasFlag(PlayerFlag_HasInfiniteCapacity)) {
-		inventoryWeight = 0.00;
+	if (hasFlag(PlayerFlag_HasInfiniteCapacity)) {
+		return;
+	}
 
-		for (int i = CONST_SLOT_FIRST; i <= CONST_SLOT_LAST; ++i) {
-			Item* item = inventory[i];
-			if (item) {
-				inventoryWeight += item->getWeight();
-			}
+	inventoryWeight = 0.00;
+	for (int i = CONST_SLOT_FIRST; i <= CONST_SLOT_LAST; ++i) {
+		const Item* item = inventory[i];
+		if (item) {
+			inventoryWeight += item->getWeight();
 		}
 	}
 }
@@ -2545,7 +2547,11 @@ ReturnValue Player::__queryAdd(int32_t index, const Thing* thing, uint32_t count
 	} else if (slotPosition & SLOTP_TWO_HAND) {
 		ret = RETURNVALUE_PUTTHISOBJECTINBOTHHANDS;
 	} else if ((slotPosition & SLOTP_RIGHT) || (slotPosition & SLOTP_LEFT)) {
-		ret = RETURNVALUE_PUTTHISOBJECTINYOURHAND;
+		if (!g_config.getBoolean(ConfigManager::CLASSIC_EQUIPMENT_SLOTS)) {
+			ret = RETURNVALUE_CANNOTBEDRESSED;
+		} else {
+			ret = RETURNVALUE_PUTTHISOBJECTINYOURHAND;
+		}
 	}
 
 	switch (index) {
@@ -2579,8 +2585,15 @@ ReturnValue Player::__queryAdd(int32_t index, const Thing* thing, uint32_t count
 
 		case CONST_SLOT_RIGHT: {
 			if (slotPosition & SLOTP_RIGHT) {
-				//check if we already carry an item in the other hand
-				if (slotPosition & SLOTP_TWO_HAND) {
+				if (!g_config.getBoolean(ConfigManager::CLASSIC_EQUIPMENT_SLOTS)) {
+					if (item->getWeaponType() != WEAPON_SHIELD) {
+						ret = RETURNVALUE_CANNOTBEDRESSED;
+					} else if (inventory[CONST_SLOT_LEFT] && (slotPosition & SLOTP_TWO_HAND)) {
+						ret = RETURNVALUE_BOTHHANDSNEEDTOBEFREE;
+					} else {
+						ret = RETURNVALUE_NOERROR;
+					}
+				} else if (slotPosition & SLOTP_TWO_HAND) {
 					if (inventory[CONST_SLOT_LEFT] && inventory[CONST_SLOT_LEFT] != item) {
 						ret = RETURNVALUE_BOTHHANDSNEEDTOBEFREE;
 					} else {
@@ -2612,8 +2625,15 @@ ReturnValue Player::__queryAdd(int32_t index, const Thing* thing, uint32_t count
 
 		case CONST_SLOT_LEFT: {
 			if (slotPosition & SLOTP_LEFT) {
-				//check if we already carry an item in the other hand
-				if (slotPosition & SLOTP_TWO_HAND) {
+				if (!g_config.getBoolean(ConfigManager::CLASSIC_EQUIPMENT_SLOTS)) {
+					if (!item->isWeapon() || item->getWeaponType() == WEAPON_SHIELD) {
+						ret = RETURNVALUE_CANNOTBEDRESSED;
+					} else if (inventory[CONST_SLOT_RIGHT] && (slotPosition & SLOTP_TWO_HAND)) {
+						ret = RETURNVALUE_BOTHHANDSNEEDTOBEFREE;
+					} else {
+						ret = RETURNVALUE_NOERROR;
+					}
+				} else if (slotPosition & SLOTP_TWO_HAND) {
 					if (inventory[CONST_SLOT_RIGHT] && inventory[CONST_SLOT_RIGHT] != item) {
 						ret = RETURNVALUE_BOTHHANDSNEEDTOBEFREE;
 					} else {
@@ -2665,7 +2685,7 @@ ReturnValue Player::__queryAdd(int32_t index, const Thing* thing, uint32_t count
 		}
 
 		case CONST_SLOT_AMMO: {
-			if (slotPosition & SLOTP_AMMO) {
+			if ((slotPosition & SLOTP_AMMO) || g_config.getBoolean(ConfigManager::CLASSIC_EQUIPMENT_SLOTS)) {
 				ret = RETURNVALUE_NOERROR;
 			}
 			break;
@@ -3986,13 +4006,14 @@ Skulls_t Player::getSkull() const
 	return skull;
 }
 
-Skulls_t Player::getSkullClient(const Player* player) const
+Skulls_t Player::getSkullClient(const Creature* creature) const
 {
-	if (!player || g_game.getWorldType() != WORLD_TYPE_PVP) {
+	if (!creature || g_game.getWorldType() != WORLD_TYPE_PVP) {
 		return SKULL_NONE;
 	}
 
-	if (player->getSkull() == SKULL_NONE) {
+	const Player* player = creature->getPlayer();
+	if (player && player->getSkull() == SKULL_NONE) {
 		if (isInWar(player)) {
 			return SKULL_GREEN;
 		}
@@ -4009,7 +4030,7 @@ Skulls_t Player::getSkullClient(const Player* player) const
 			return SKULL_GREEN;
 		}
 	}
-	return player->getSkull();
+	return Creature::getSkullClient(creature);
 }
 
 bool Player::hasAttacked(const Player* attacked) const
@@ -4050,10 +4071,10 @@ void Player::addUnjustifiedDead(const Player* attacked)
 	skullTicks += g_config.getNumber(ConfigManager::FRAG_TIME);
 
 	if (getSkull() != SKULL_BLACK) {
-		if (g_config.getNumber(ConfigManager::KILLS_TO_BLACK) != 0 && skullTicks > (g_config.getNumber(ConfigManager::KILLS_TO_BLACK) - 1) * g_config.getNumber(ConfigManager::FRAG_TIME)) {
+		if (g_config.getNumber(ConfigManager::KILLS_TO_BLACK) != 0 && skullTicks > (g_config.getNumber(ConfigManager::KILLS_TO_BLACK) - 1) * static_cast<int64_t>(g_config.getNumber(ConfigManager::FRAG_TIME))) {
 			setSkull(SKULL_BLACK);
 			g_game.updatePlayerSkull(this);
-		} else if (getSkull() != SKULL_RED && g_config.getNumber(ConfigManager::KILLS_TO_RED) != 0 && skullTicks > (g_config.getNumber(ConfigManager::KILLS_TO_RED) - 1) * g_config.getNumber(ConfigManager::FRAG_TIME)) {
+		} else if (getSkull() != SKULL_RED && g_config.getNumber(ConfigManager::KILLS_TO_RED) != 0 && skullTicks > (g_config.getNumber(ConfigManager::KILLS_TO_RED) - 1) * static_cast<int64_t>(g_config.getNumber(ConfigManager::FRAG_TIME))) {
 			setSkull(SKULL_RED);
 			g_game.updatePlayerSkull(this);
 		}
