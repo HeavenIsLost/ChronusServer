@@ -1866,6 +1866,7 @@ void LuaScriptInterface::registerFunctions()
 	registerEnumIn("configKeys", ConfigManager::STAMINA_SYSTEM)
 	registerEnumIn("configKeys", ConfigManager::WARN_UNSAFE_SCRIPTS)
 	registerEnumIn("configKeys", ConfigManager::CONVERT_UNSAFE_SCRIPTS)
+	registerEnumIn("configKeys", ConfigManager::CLASSIC_EQUIPMENT_SLOTS)
 
 	registerEnumIn("configKeys", ConfigManager::MAP_NAME)
 	registerEnumIn("configKeys", ConfigManager::HOUSE_RENT_PERIOD)
@@ -1916,6 +1917,9 @@ void LuaScriptInterface::registerFunctions()
 	registerEnumIn("configKeys", ConfigManager::MAX_MARKET_OFFERS_AT_A_TIME_PER_PLAYER)
 	registerEnumIn("configKeys", ConfigManager::EXP_FROM_PLAYERS_LEVEL_RANGE)
 	registerEnumIn("configKeys", ConfigManager::MAX_PACKETS_PER_SECOND)
+
+	// os
+	registerMethod("os", "mtime", LuaScriptInterface::luaSystemTime);
 
 	// table
 	registerMethod("table", "create", LuaScriptInterface::luaTableCreate);
@@ -4678,6 +4682,14 @@ int32_t LuaScriptInterface::luaIsType(lua_State* L)
 	size_t hashA = getNumber<size_t>(L, 1);
 
 	pushBoolean(L, hashA == hashB);
+	return 1;
+}
+
+// os
+int32_t LuaScriptInterface::luaSystemTime(lua_State* L)
+{
+	// os.mtime()
+	lua_pushnumber(L, OTSYS_TIME());
 	return 1;
 }
 
@@ -8096,7 +8108,7 @@ int32_t LuaScriptInterface::luaPlayerGetCapacity(lua_State* L)
 	// player:getCapacity()
 	Player* player = getUserdata<Player>(L, 1);
 	if (player) {
-		lua_pushnumber(L, player->getCapacity());
+		lua_pushnumber(L, static_cast<uint64_t>(player->getCapacity() * 100));
 	} else {
 		lua_pushnil(L);
 	}
@@ -8108,7 +8120,7 @@ int32_t LuaScriptInterface::luaPlayerSetCapacity(lua_State* L)
 	// player:setCapacity(capacity)
 	Player* player = getUserdata<Player>(L, 1);
 	if (player) {
-		player->capacity = std::max(0.0, std::min<double>(10000.0, getNumber<double>(L, 2)));
+		player->capacity = std::max(0.0, std::min<double>(10000.0, getNumber<double>(L, 2) / 100));
 		player->sendStats();
 		pushBoolean(L, true);
 	} else {
@@ -8122,7 +8134,7 @@ int32_t LuaScriptInterface::luaPlayerGetFreeCapacity(lua_State* L)
 	// player:getFreeCapacity()
 	Player* player = getUserdata<Player>(L, 1);
 	if (player) {
-		lua_pushnumber(L, player->getFreeCapacity());
+		lua_pushnumber(L, static_cast<uint64_t>(player->getFreeCapacity() * 100));
 	} else {
 		lua_pushnil(L);
 	}
@@ -9051,6 +9063,7 @@ int32_t LuaScriptInterface::luaPlayerShowTextDialog(lua_State* L)
 	if (!item) {
 		reportErrorFunc(getErrorDesc(LUA_ERROR_ITEM_NOT_FOUND));
 		pushBoolean(L, false);
+		return 1;
 	}
 
 	if (length < 0) {
@@ -11207,9 +11220,8 @@ int32_t LuaScriptInterface::luaItemTypeGetCapacity(lua_State* L)
 
 int32_t LuaScriptInterface::luaItemTypeGetWeight(lua_State* L)
 {
-	// itemType:getWeight([count = 1[, precise = true]])
+	// itemType:getWeight([count = 1])
 	uint16_t count = getNumber<uint16_t>(L, 2, 1);
-	bool precise = getBoolean(L, 3, true);
 
 	const ItemType* itemType = getUserdata<const ItemType>(L, 1);
 	if (!itemType) {
@@ -11217,12 +11229,7 @@ int32_t LuaScriptInterface::luaItemTypeGetWeight(lua_State* L)
 		return 1;
 	}
 
-	double weight = itemType->weight * std::max<int32_t>(1, count);
-	if (precise) {
-		std::ostringstream ws;
-		ws << std::fixed << std::setprecision(2) << weight;
-		weight = std::stof(ws.str());
-	}
+	uint64_t weight = (itemType->weight * std::max<int32_t>(1, count)) * 100;
 	lua_pushnumber(L, weight);
 	return 1;
 }
