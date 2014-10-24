@@ -17,3 +17,8 @@ function onLogin(cid)
 	player:registerEvent("PlayerDeath")
 	return true
 end
+
+--It happens when player is kicked by another client or its re-enter the game after exited
+function onReLogin(cid)
+	return true
+end

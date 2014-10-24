@@ -117,6 +117,19 @@ bool CreatureEvents::playerLogin(Player* player) const
 	return true;
 }
 
+bool CreatureEvents::playerReLogin(Player* player) const
+{
+	//fire global event if is registered
+	for (const auto& it : m_creatureEvents) {
+		if (it.second->getEventType() == CREATURE_EVENT_RELOGIN) {
+			if (!it.second->executeOnReLogin(player)) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
 bool CreatureEvents::playerLogout(Player* player) const
 {
 	//fire global event if is registered
@@ -199,6 +212,8 @@ bool CreatureEvent::configureEvent(const pugi::xml_node& node)
 		m_type = CREATURE_EVENT_COMBAT;
 	} else if (tmpStr == "combatarea") {
 		m_type = CREATURE_EVENT_COMBATAREA;
+	} else if (tmpStr == "relogin") {
+		m_type = CREATURE_EVENT_RELOGIN;
 	} else {
 		std::cout << "[Error - CreatureEvent::configureEvent] Invalid type for creature event: " << m_eventName << std::endl;
 		return false;
@@ -254,6 +269,9 @@ std::string CreatureEvent::getScriptEventName()
 		case CREATURE_EVENT_COMBATAREA:
 			return "onCombatArea";
 
+		case CREATURE_EVENT_RELOGIN:
+			return "onReLogin";
+
 		case CREATURE_EVENT_NONE:
 		default:
 			return std::string();
@@ -277,6 +295,25 @@ void CreatureEvent::clearEvent()
 }
 
 bool CreatureEvent::executeOnLogin(Player* player)
+{
+	//onLogin(cid)
+	if (!m_scriptInterface->reserveScriptEnv()) {
+		std::cout << "[Error - CreatureEvent::executeOnLogin] Call stack overflow" << std::endl;
+		return false;
+	}
+
+	ScriptEnvironment* env = m_scriptInterface->getScriptEnv();
+	env->setScriptId(m_scriptId, m_scriptInterface);
+
+	lua_State* L = m_scriptInterface->getLuaState();
+
+	m_scriptInterface->pushFunction(m_scriptId);
+	lua_pushnumber(L, player->getID());
+
+	return m_scriptInterface->callFunction(1);
+}
+
+bool CreatureEvent::executeOnReLogin(Player* player)
 {
 	//onLogin(cid)
 	if (!m_scriptInterface->reserveScriptEnv()) {

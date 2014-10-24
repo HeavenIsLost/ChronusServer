@@ -214,16 +214,16 @@ void ProtocolGame::login(const std::string& name, uint32_t accountId, OperatingS
 			_player->isConnecting = true;
 
 			addRef();
-			eventConnect = g_scheduler.addEvent(createSchedulerTask(1000, std::bind(&ProtocolGame::connect, this, _player->getID(), operatingSystem)));
+			eventConnect = g_scheduler.addEvent(createSchedulerTask(1000, std::bind(&ProtocolGame::connect, this, _player->getID(), operatingSystem, true)));
 			return;
 		}
 
 		addRef();
-		connect(_player->getID(), operatingSystem);
+		connect(_player->getID(), operatingSystem, true);
 	}
 }
 
-void ProtocolGame::connect(uint32_t playerId, OperatingSystem_t operatingSystem)
+void ProtocolGame::connect(uint32_t playerId, OperatingSystem_t operatingSystem, bool reLogin)
 {
 	unRef();
 	eventConnect = 0;
@@ -247,6 +247,10 @@ void ProtocolGame::connect(uint32_t playerId, OperatingSystem_t operatingSystem)
 	player->lastIP = player->getIP();
 	player->lastLoginSaved = std::max<time_t>(time(nullptr), player->lastLoginSaved + 1);
 	m_acceptPackets = true;
+
+	if (reLogin) {
+		g_creatureEvents->playerReLogin(player);
+	}
 }
 
 void ProtocolGame::logout(bool displayEffect, bool forced)
