@@ -1,8 +1,8 @@
 function onSay(cid, words, param)
 	
 	local player = Player(cid)
-	if not param then
-		player:sendTextMessage(MESSAGE_STATUS_CONSOLE_BLUE, "Its needs at least one parameter.")
+	if (not param) or (param == "") then
+		player:sendTextMessage(MESSAGE_STATUS_CONSOLE_BLUE, "It need at least one parameter.")
 		return false
 	end
 
