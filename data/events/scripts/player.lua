@@ -113,3 +113,7 @@ end
 function Player:onLoseExperience(exp)
 	return exp
 end
+
+function Player:getMissionDescription(descriptionId)
+	return  missionDescription:onMissionDescription(self, descriptionId)
+end

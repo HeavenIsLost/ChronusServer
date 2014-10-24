@@ -23,8 +23,11 @@
 #include "tools.h"
 
 #include "pugicast.h"
+#include "events.h"
 
-std::string Mission::getDescription(Player* player) const
+extern Events* g_events;
+
+bool Mission::internalGetDescription(Player* player, std::string& description) const
 {
 	int32_t value;
 	player->getStorageValue(storageID, value);
@@ -33,7 +36,8 @@ std::string Mission::getDescription(Player* player) const
 		std::string desc = mainState->getMissionDescription();
 		replaceString(desc, "|STATE|", std::to_string(value));
 		replaceString(desc, "\\n", "\n");
-		return desc;
+		description = desc;
+		return true;
 	}
 
 	int32_t current = endValue;
@@ -43,18 +47,21 @@ std::string Mission::getDescription(Player* player) const
 			if (value >= current) {
 				auto sit = state.find(current);
 				if (sit != state.end()) {
-					return sit->second.getMissionDescription();
+					description = sit->second.getMissionDescription();
+					return true;
 				}
 			}
 
 			current--;
 		}
-	} else {
+	}
+	else {
 		while (current >= startValue) {
 			if (value == current) {
 				auto sit = state.find(current);
 				if (sit != state.end()) {
-					return sit->second.getMissionDescription();
+					description = sit->second.getMissionDescription();
+					return true;
 				}
 			}
 
@@ -62,8 +69,34 @@ std::string Mission::getDescription(Player* player) const
 		}
 	}
 
+	return false;
+}
+
+std::string Mission::getDescription(Player* player) const
+{
+	std::string description;
+
+	if (internalGetDescription(player, description)) {
+		if (custom) {
+
+			std::string tmpDescription = description;
+
+			g_events->eventPlayerGetMissionDescription(player, description);
+
+			if (description == "" || description == tmpDescription) {
+				std::cout << "[Error - Mission::getDescription] Failed to get Custom Description: " << tmpDescription << std::endl;
+
+				return "An error has occurred, please contact a gamemaster.";
+			}
+
+		}
+
+		return description;
+	}
+
 	return "An error has occurred, please contact a gamemaster.";
 }
+
 
 bool Mission::isStarted(Player* player) const
 {
@@ -191,7 +224,8 @@ bool Quests::loadFromXml()
 				pugi::cast<int32_t>(missionNode.attribute("storageid").value()),
 				pugi::cast<int32_t>(missionNode.attribute("startvalue").value()),
 				pugi::cast<int32_t>(missionNode.attribute("endvalue").value()),
-				missionNode.attribute("ignoreendvalue").as_bool()
+				missionNode.attribute("ignoreendvalue").as_bool(),
+				missionNode.attribute("custom").as_bool()
 			);
 			Mission& mission = quest.missions.back();
 

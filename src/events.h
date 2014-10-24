@@ -52,6 +52,7 @@ class Events
 		bool eventPlayerOnTradeAccept(Player* player, Player* target, Item* item, Item* targetItem);
 		void eventPlayerOnGainExperience(Player* player, Creature* source, uint64_t& exp, uint64_t rawExp);
 		void eventPlayerOnLoseExperience(Player* player, uint64_t& exp);
+		void eventPlayerGetMissionDescription(Player* player, std::string &description);
 
 	private:
 		LuaScriptInterface scriptInterface;
@@ -74,6 +75,7 @@ class Events
 		int32_t playerOnTradeAccept;
 		int32_t playerOnGainExperience;
 		int32_t playerOnLoseExperience;
+		int32_t playerGetMissionDescription;
 };
 
 #endif
