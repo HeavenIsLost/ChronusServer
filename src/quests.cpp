@@ -83,7 +83,7 @@ std::string Mission::getDescription(Player* player) const
 
 			g_events->eventPlayerGetMissionDescription(player, description);
 
-			if (description == "" || description == tmpDescription) {
+			if (description == "") {
 				std::cout << "[Error - Mission::getDescription] Failed to get Custom Description: " << tmpDescription << std::endl;
 
 				return "An error has occurred, please contact a gamemaster.";
