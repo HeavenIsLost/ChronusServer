@@ -17,6 +17,6 @@ function onLogin(player)
 end
 
 --It happens when player is kicked by another client or its re-enter the game after exited
-function onReLogin(cid)
+function onReLogin(player)
 	return true
 end

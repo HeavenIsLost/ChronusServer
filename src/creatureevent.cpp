@@ -311,7 +311,7 @@ bool CreatureEvent::executeOnLogin(Player* player)
 
 bool CreatureEvent::executeOnReLogin(Player* player)
 {
-	//onLogin(cid)
+	//onLogin(player)
 	if (!m_scriptInterface->reserveScriptEnv()) {
 		std::cout << "[Error - CreatureEvent::executeOnLogin] Call stack overflow" << std::endl;
 		return false;
@@ -323,8 +323,8 @@ bool CreatureEvent::executeOnReLogin(Player* player)
 	lua_State* L = m_scriptInterface->getLuaState();
 
 	m_scriptInterface->pushFunction(m_scriptId);
-	lua_pushnumber(L, player->getID());
-
+	LuaScriptInterface::pushUserdata(L, player);
+	LuaScriptInterface::setMetatable(L, -1, "Player");
 	return m_scriptInterface->callFunction(1);
 }
 
