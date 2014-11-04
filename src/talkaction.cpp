@@ -66,12 +66,7 @@ Event* TalkActions::getEvent(const std::string& nodeName)
 
 bool TalkActions::registerEvent(Event* event, const pugi::xml_node&)
 {
-	TalkAction* talkAction = dynamic_cast<TalkAction*>(event);
-	if (!talkAction) {
-		return false;
-	}
-
-	talkActions.push_back(talkAction);
+	talkActions.push_back(static_cast<TalkAction*>(event));
 	return true;
 }
 
@@ -192,7 +187,7 @@ std::string TalkAction::getScriptEventName()
 
 bool TalkAction::executeSay(const Player* player, const std::string& words, const std::string& param, SpeakClasses type) const
 {
-	//onSay(cid, words, param, type)
+	//onSay(player, words, param, type)
 	if (!m_scriptInterface->reserveScriptEnv()) {
 		std::cout << "[Error - TalkAction::executeSay] Call stack overflow" << std::endl;
 		return false;
@@ -204,7 +199,10 @@ bool TalkAction::executeSay(const Player* player, const std::string& words, cons
 	lua_State* L = m_scriptInterface->getLuaState();
 
 	m_scriptInterface->pushFunction(m_scriptId);
-	lua_pushnumber(L, player->getID());
+
+	LuaScriptInterface::pushUserdata<Player>(L, const_cast<Player*>(player));
+	LuaScriptInterface::setMetatable(L, -1, "Player");
+
 	LuaScriptInterface::pushString(L, words);
 	LuaScriptInterface::pushString(L, param);
 	lua_pushnumber(L, type);

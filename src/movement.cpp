@@ -102,14 +102,9 @@ Event* MoveEvents::getEvent(const std::string& nodeName)
 
 bool MoveEvents::registerEvent(Event* event, const pugi::xml_node& node)
 {
-	MoveEvent* moveEvent = dynamic_cast<MoveEvent*>(event);
-	if (!moveEvent) {
-		return false;
-	}
+	MoveEvent* moveEvent = static_cast<MoveEvent*>(event);
 
-	bool success = true;
-
-	MoveEvent_t eventType = moveEvent->getEventType();
+	const MoveEvent_t eventType = moveEvent->getEventType();
 	if (eventType == MOVE_EVENT_ADD_ITEM || eventType == MOVE_EVENT_REMOVE_ITEM) {
 		pugi::xml_attribute tileItemAttribute = node.attribute("tileitem");
 		if (tileItemAttribute && pugi::cast<uint16_t>(tileItemAttribute.value()) == 1) {
@@ -184,16 +179,16 @@ bool MoveEvents::registerEvent(Event* event, const pugi::xml_node& node)
 		}
 	} else if ((attr = node.attribute("pos"))) {
 		std::vector<int32_t> posList = vectorAtoi(explodeString(attr.as_string(), ";"));
-		if (posList.size() >= 3) {
-			Position pos(posList[0], posList[1], posList[2]);
-			addEvent(moveEvent, pos, m_positionMap);
-		} else {
-			success = false;
+		if (posList.size() < 3) {
+			return false;
 		}
+
+		Position pos(posList[0], posList[1], posList[2]);
+		addEvent(moveEvent, pos, m_positionMap);
 	} else {
-		success = false;
+		return false;
 	}
-	return success;
+	return true;
 }
 
 void MoveEvents::addEvent(MoveEvent* moveEvent, int32_t id, MoveListMap& map)
@@ -745,12 +740,12 @@ uint32_t MoveEvent::EquipItem(MoveEvent* moveEvent, Player* player, Item* item, 
 	for (int32_t s = STAT_FIRST; s <= STAT_LAST; ++s) {
 		if (it.abilities->stats[s]) {
 			needUpdateStats = true;
-			player->setVarStats((stats_t)s, it.abilities->stats[s]);
+			player->setVarStats(static_cast<stats_t>(s), it.abilities->stats[s]);
 		}
 
 		if (it.abilities->statsPercent[s]) {
 			needUpdateStats = true;
-			player->setVarStats((stats_t)s, (int32_t)(player->getDefaultStats((stats_t)s) * ((it.abilities->statsPercent[s] - 100) / 100.f)));
+			player->setVarStats(static_cast<stats_t>(s), static_cast<int32_t>(player->getDefaultStats(static_cast<stats_t>(s)) * ((it.abilities->statsPercent[s] - 100) / 100.f)));
 		}
 	}
 
@@ -821,12 +816,12 @@ uint32_t MoveEvent::DeEquipItem(MoveEvent*, Player* player, Item* item, slots_t 
 	for (int32_t s = STAT_FIRST; s <= STAT_LAST; ++s) {
 		if (it.abilities->stats[s]) {
 			needUpdateStats = true;
-			player->setVarStats((stats_t)s, -it.abilities->stats[s]);
+			player->setVarStats(static_cast<stats_t>(s), -it.abilities->stats[s]);
 		}
 
 		if (it.abilities->statsPercent[s]) {
 			needUpdateStats = true;
-			player->setVarStats((stats_t)s, -(int32_t)(player->getDefaultStats((stats_t)s) * ((it.abilities->statsPercent[s] - 100) / 100.f)));
+			player->setVarStats(static_cast<stats_t>(s), -static_cast<int32_t>(player->getDefaultStats(static_cast<stats_t>(s)) * ((it.abilities->statsPercent[s] - 100) / 100.f)));
 		}
 	}
 
@@ -848,8 +843,8 @@ uint32_t MoveEvent::fireStepEvent(Creature* creature, Item* item, const Position
 
 bool MoveEvent::executeStep(Creature* creature, Item* item, const Position& pos)
 {
-	//onStepIn(cid, item, pos, fromPosition)
-	//onStepOut(cid, item, pos, fromPosition)
+	//onStepIn(creature, item, pos, fromPosition)
+	//onStepOut(creature, item, pos, fromPosition)
 	if (!m_scriptInterface->reserveScriptEnv()) {
 		std::cout << "[Error - MoveEvent::executeStep] Call stack overflow" << std::endl;
 		return false;
@@ -861,7 +856,8 @@ bool MoveEvent::executeStep(Creature* creature, Item* item, const Position& pos)
 	lua_State* L = m_scriptInterface->getLuaState();
 
 	m_scriptInterface->pushFunction(m_scriptId);
-	lua_pushnumber(L, creature->getID());
+	LuaScriptInterface::pushUserdata<Creature>(L, creature);
+	LuaScriptInterface::setCreatureMetatable(L, -1, creature);
 	LuaScriptInterface::pushThing(L, item, env->addThing(item));
 	LuaScriptInterface::pushPosition(L, pos);
 	LuaScriptInterface::pushPosition(L, creature->getLastPosition());
@@ -880,8 +876,8 @@ uint32_t MoveEvent::fireEquip(Player* player, Item* item, slots_t slot, bool boo
 
 bool MoveEvent::executeEquip(Player* player, Item* item, slots_t slot)
 {
-	//onEquip(cid, item, slot)
-	//onDeEquip(cid, item, slot)
+	//onEquip(player, item, slot)
+	//onDeEquip(player, item, slot)
 	if (!m_scriptInterface->reserveScriptEnv()) {
 		std::cout << "[Error - MoveEvent::executeEquip] Call stack overflow" << std::endl;
 		return false;
@@ -893,7 +889,8 @@ bool MoveEvent::executeEquip(Player* player, Item* item, slots_t slot)
 	lua_State* L = m_scriptInterface->getLuaState();
 
 	m_scriptInterface->pushFunction(m_scriptId);
-	lua_pushnumber(L, player->getID());
+	LuaScriptInterface::pushUserdata<Player>(L, player);
+	LuaScriptInterface::setMetatable(L, -1, "Player");
 	LuaScriptInterface::pushThing(L, item, env->addThing(item));
 	lua_pushnumber(L, slot);
 

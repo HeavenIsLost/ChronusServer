@@ -551,7 +551,7 @@ void ProtocolGame::parsePacket(NetworkMessage& msg)
 		case 0xF9: parseModalWindowAnswer(msg); break;
 
 		default:
-			// std::cout << "Player: " << player->getName() << " sent an unknown packet header: 0x" << std::hex << (int16_t)recvbyte << std::dec << "!" << std::endl;
+			// std::cout << "Player: " << player->getName() << " sent an unknown packet header: 0x" << std::hex << static_cast<uint16_t>(recvbyte) << std::dec << "!" << std::endl;
 			break;
 	}
 
@@ -1302,7 +1302,7 @@ void ProtocolGame::sendCreatureSquare(const Creature* creature, SquareColor_t co
 	NetworkMessage msg;
 	msg.AddByte(0x86);
 	msg.add<uint32_t>(creature->getID());
-	msg.AddByte((uint8_t)color);
+	msg.AddByte(color);
 	writeToOutputBuffer(msg);
 }
 
@@ -2032,9 +2032,18 @@ void ProtocolGame::sendMarketDetail(uint16_t itemId)
 
 	msg.AddString(weaponName);
 
-	if (it.weight > 0) {
+	if (it.weight != 0) {
 		std::ostringstream ss;
-		ss << std::fixed << std::setprecision(2) << it.weight << " oz";
+		if (it.weight < 10) {
+			ss << "0.0" << it.weight;
+		} else if (it.weight < 100) {
+			ss << "0." << it.weight;
+		} else {
+			std::string weightString = std::to_string(it.weight);
+			weightString.insert(weightString.end() - 2, '.');
+			ss << weightString;
+		}
+		ss << " oz";
 		msg.AddString(ss.str());
 	} else {
 		msg.add<uint16_t>(0x00);
@@ -2325,7 +2334,7 @@ void ProtocolGame::sendCreatureHealth(const Creature* creature)
 	if (creature->isHealthHidden()) {
 		msg.AddByte(0x00);
 	} else {
-		msg.AddByte((int32_t)std::ceil(((float)creature->getHealth()) * 100 / std::max<int32_t>(creature->getMaxHealth(), 1)));
+		msg.AddByte(static_cast<int32_t>(std::ceil(((float)creature->getHealth()) * 100 / std::max<int32_t>(creature->getMaxHealth(), 1))));
 	}
 	writeToOutputBuffer(msg);
 }
@@ -2904,10 +2913,10 @@ void ProtocolGame::AddCreature(NetworkMessage& msg, const Creature* creature, bo
 	if (creature->isHealthHidden()) {
 		msg.AddByte(0x00);
 	} else {
-		msg.AddByte((int32_t)std::ceil(((float)creature->getHealth()) * 100 / std::max<int32_t>(creature->getMaxHealth(), 1)));
+		msg.AddByte(static_cast<int32_t>(std::ceil(((float)creature->getHealth()) * 100 / std::max<int32_t>(creature->getMaxHealth(), 1))));
 	}
 
-	msg.AddByte((uint8_t)creature->getDirection());
+	msg.AddByte(creature->getDirection());
 
 	if (!creature->isInGhostMode() && !creature->isInvisible()) {
 		AddOutfit(msg, creature->getCurrentOutfit());
@@ -2964,8 +2973,8 @@ void ProtocolGame::AddPlayerStats(NetworkMessage& msg)
 	msg.add<uint16_t>(std::min<int32_t>(0xFFFF, player->getHealth()));
 	msg.add<uint16_t>(std::min<int32_t>(0xFFFF, player->getPlayerInfo(PLAYERINFO_MAXHEALTH)));
 
-	msg.add<uint32_t>(uint32_t(player->getFreeCapacity() * 100));
-	msg.add<uint32_t>(uint32_t(player->getCapacity() * 100));
+	msg.add<uint32_t>(player->getFreeCapacity());
+	msg.add<uint32_t>(player->getCapacity());
 
 	msg.add<uint64_t>(player->getExperience());
 
@@ -3171,7 +3180,7 @@ void ProtocolGame::AddShopItem(NetworkMessage& msg, const ShopInfo& item)
 	}
 
 	msg.AddString(item.realName);
-	msg.add<uint32_t>(static_cast<uint32_t>(it.weight * 100));
+	msg.add<uint32_t>(it.weight);
 	msg.add<uint32_t>(item.buyPrice);
 	msg.add<uint32_t>(item.sellPrice);
 }

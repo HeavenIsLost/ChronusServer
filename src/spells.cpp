@@ -152,17 +152,18 @@ bool Spells::registerEvent(Event* event, const pugi::xml_node&)
 
 		instants[instant->getWords()] = instant;
 		return true;
-	} else {
-		RuneSpell* rune = dynamic_cast<RuneSpell*>(event);
-		if (rune) {
-			if (runes.find(rune->getRuneItemId()) != runes.end()) {
-				std::cout << "[Warning - Spells::registerEvent] Duplicate registered rune with id: " << rune->getRuneItemId() << std::endl;
-				return false;
-			}
+	}
 
-			runes[rune->getRuneItemId()] = rune;
-			return true;
+	RuneSpell* rune = dynamic_cast<RuneSpell*>(event);
+	if (rune) {
+		uint16_t runeId = rune->getRuneItemId();
+		if (runes.find(runeId) != runes.end()) {
+			std::cout << "[Warning - Spells::registerEvent] Duplicate registered rune with id: " << runeId << std::endl;
+			return false;
 		}
+
+		runes[runeId] = rune;
+		return true;
 	}
 	return false;
 }
@@ -826,9 +827,7 @@ void Spell::postCastSpell(Player* player, bool finishedCast /*= true*/, bool pay
 	}
 
 	if (payCost) {
-		int32_t manaCost = getManaCost(player);
-		int32_t soulCost = getSoulCost();
-		postCastSpell(player, (uint32_t)manaCost, (uint32_t)soulCost);
+		postCastSpell(player, getManaCost(player), getSoulCost());
 	}
 }
 
@@ -836,12 +835,12 @@ void Spell::postCastSpell(Player* player, uint32_t manaCost, uint32_t soulCost) 
 {
 	if (manaCost > 0) {
 		player->addManaSpent(manaCost * player->getRate(SKILL_MAGLEVEL));
-		player->changeMana(-(int32_t)manaCost);
+		player->changeMana(-static_cast<int32_t>(manaCost));
 	}
 
 	if (!player->hasFlag(PlayerFlag_HasInfiniteSoul)) {
 		if (soulCost > 0) {
-			player->changeSoul(-(int32_t)soulCost);
+			player->changeSoul(-static_cast<int32_t>(soulCost));
 		}
 	}
 }
@@ -1810,7 +1809,7 @@ bool RuneSpell::configureEvent(const pugi::xml_node& node)
 		std::cout << "[Error - RuneSpell::configureSpell] Rune spell without id." << std::endl;
 		return false;
 	}
-	runeId = pugi::cast<uint32_t>(attr.value());
+	runeId = pugi::cast<uint16_t>(attr.value());
 
 	uint32_t charges;
 	if ((attr = node.attribute("charges"))) {

@@ -67,11 +67,7 @@ Event* CreatureEvents::getEvent(const std::string& nodeName)
 
 bool CreatureEvents::registerEvent(Event* event, const pugi::xml_node&)
 {
-	CreatureEvent* creatureEvent = dynamic_cast<CreatureEvent*>(event);
-	if (!creatureEvent) {
-		return false;
-	}
-
+	CreatureEvent* creatureEvent = static_cast<CreatureEvent*>(event);
 	if (creatureEvent->getEventType() == CREATURE_EVENT_NONE) {
 		std::cout << "Error: [CreatureEvents::registerEvent] Trying to register event without type!" << std::endl;
 		return false;
@@ -296,7 +292,7 @@ void CreatureEvent::clearEvent()
 
 bool CreatureEvent::executeOnLogin(Player* player)
 {
-	//onLogin(cid)
+	//onLogin(player)
 	if (!m_scriptInterface->reserveScriptEnv()) {
 		std::cout << "[Error - CreatureEvent::executeOnLogin] Call stack overflow" << std::endl;
 		return false;
@@ -308,8 +304,8 @@ bool CreatureEvent::executeOnLogin(Player* player)
 	lua_State* L = m_scriptInterface->getLuaState();
 
 	m_scriptInterface->pushFunction(m_scriptId);
-	lua_pushnumber(L, player->getID());
-
+	LuaScriptInterface::pushUserdata(L, player);
+	LuaScriptInterface::setMetatable(L, -1, "Player");
 	return m_scriptInterface->callFunction(1);
 }
 
@@ -334,7 +330,7 @@ bool CreatureEvent::executeOnReLogin(Player* player)
 
 bool CreatureEvent::executeOnLogout(Player* player)
 {
-	//onLogout(cid)
+	//onLogout(player)
 	if (!m_scriptInterface->reserveScriptEnv()) {
 		std::cout << "[Error - CreatureEvent::executeOnLogout] Call stack overflow" << std::endl;
 		return false;
@@ -346,14 +342,14 @@ bool CreatureEvent::executeOnLogout(Player* player)
 	lua_State* L = m_scriptInterface->getLuaState();
 
 	m_scriptInterface->pushFunction(m_scriptId);
-	lua_pushnumber(L, player->getID());
-
+	LuaScriptInterface::pushUserdata(L, player);
+	LuaScriptInterface::setMetatable(L, -1, "Player");
 	return m_scriptInterface->callFunction(1);
 }
 
 bool CreatureEvent::executeOnThink(Creature* creature, uint32_t interval)
 {
-	//onThink(cid, interval)
+	//onThink(creature, interval)
 	if (!m_scriptInterface->reserveScriptEnv()) {
 		std::cout << "[Error - CreatureEvent::executeOnThink] Call stack overflow" << std::endl;
 		return false;
@@ -365,7 +361,8 @@ bool CreatureEvent::executeOnThink(Creature* creature, uint32_t interval)
 	lua_State* L = m_scriptInterface->getLuaState();
 
 	m_scriptInterface->pushFunction(m_scriptId);
-	lua_pushnumber(L, creature->getID());
+	LuaScriptInterface::pushUserdata<Creature>(L, creature);
+	LuaScriptInterface::setCreatureMetatable(L, -1, creature);
 	lua_pushnumber(L, interval);
 
 	return m_scriptInterface->callFunction(2);
@@ -373,7 +370,7 @@ bool CreatureEvent::executeOnThink(Creature* creature, uint32_t interval)
 
 bool CreatureEvent::executeOnPrepareDeath(Creature* creature, Creature* killer)
 {
-	//onPrepareDeath(cid, killer)
+	//onPrepareDeath(creature, killer)
 	if (!m_scriptInterface->reserveScriptEnv()) {
 		std::cout << "[Error - CreatureEvent::executeOnPrepareDeath] Call stack overflow" << std::endl;
 		return false;
@@ -382,25 +379,26 @@ bool CreatureEvent::executeOnPrepareDeath(Creature* creature, Creature* killer)
 	ScriptEnvironment* env = m_scriptInterface->getScriptEnv();
 	env->setScriptId(m_scriptId, m_scriptInterface);
 
-	uint32_t killercid;
-	if (killer) {
-		killercid = killer->getID();
-	} else {
-		killercid = 0;
-	}
-
 	lua_State* L = m_scriptInterface->getLuaState();
 
 	m_scriptInterface->pushFunction(m_scriptId);
-	lua_pushnumber(L, creature->getID());
-	lua_pushnumber(L, killercid);
+
+	LuaScriptInterface::pushUserdata<Creature>(L, creature);
+	LuaScriptInterface::setCreatureMetatable(L, -1, creature);
+
+	if (killer) {
+		LuaScriptInterface::pushUserdata<Creature>(L, killer);
+		LuaScriptInterface::setCreatureMetatable(L, -1, killer);
+	} else {
+		lua_pushnil(L);
+	}
 
 	return m_scriptInterface->callFunction(2);
 }
 
 bool CreatureEvent::executeOnDeath(Creature* creature, Item* corpse, Creature* killer, Creature* mostDamageKiller, bool lastHitUnjustified, bool mostDamageUnjustified)
 {
-	//onDeath(cid, corpse, lasthitkiller, mostdamagekiller, lasthitunjustified, mostdamageunjustified)
+	//onDeath(creature, corpse, lasthitkiller, mostdamagekiller, lasthitunjustified, mostdamageunjustified)
 	if (!m_scriptInterface->reserveScriptEnv()) {
 		std::cout << "[Error - CreatureEvent::executeOnDeath] Call stack overflow" << std::endl;
 		return false;
@@ -409,31 +407,29 @@ bool CreatureEvent::executeOnDeath(Creature* creature, Item* corpse, Creature* k
 	ScriptEnvironment* env = m_scriptInterface->getScriptEnv();
 	env->setScriptId(m_scriptId, m_scriptInterface);
 
-	uint32_t corpseid = env->addThing(corpse);
-
-	uint32_t killercid;
-	if (killer) {
-		killercid = killer->getID();
-	} else {
-		killercid = 0;
-	}
-
-	uint32_t mostdamagekillercid;
-	if (mostDamageKiller) {
-		mostdamagekillercid = mostDamageKiller->getID();
-	} else {
-		mostdamagekillercid = 0;
-	}
-
 	lua_State* L = m_scriptInterface->getLuaState();
 
 	m_scriptInterface->pushFunction(m_scriptId);
-	lua_pushnumber(L, creature->getID());
-	lua_pushnumber(L, corpseid);
-	lua_pushnumber(L, killercid);
-	lua_pushnumber(L, mostdamagekillercid);
-	lua_pushnumber(L, lastHitUnjustified);
-	lua_pushnumber(L, mostDamageUnjustified);
+	LuaScriptInterface::pushUserdata<Creature>(L, creature);
+	LuaScriptInterface::setCreatureMetatable(L, -1, creature);
+	lua_pushnumber(L, env->addThing(corpse));
+
+	if (killer) {
+		LuaScriptInterface::pushUserdata<Creature>(L, killer);
+		LuaScriptInterface::setCreatureMetatable(L, -1, killer);
+	} else {
+		lua_pushnil(L);
+	}
+
+	if (mostDamageKiller) {
+		LuaScriptInterface::pushUserdata<Creature>(L, mostDamageKiller);
+		LuaScriptInterface::setCreatureMetatable(L, -1, mostDamageKiller);
+	} else {
+		lua_pushnil(L);
+	}
+
+	lua_pushboolean(L, lastHitUnjustified);
+	lua_pushboolean(L, mostDamageUnjustified);
 
 	return m_scriptInterface->callFunction(6);
 }
@@ -441,6 +437,7 @@ bool CreatureEvent::executeOnDeath(Creature* creature, Item* corpse, Creature* k
 bool CreatureEvent::executeAdvance(Player* player, skills_t skill, uint32_t oldLevel,
                                        uint32_t newLevel)
 {
+	//onAdvance(player, skill, oldLevel, newLevel)
 	if (!m_scriptInterface->reserveScriptEnv()) {
 		std::cout << "[Error - CreatureEvent::executeAdvance] Call stack overflow" << std::endl;
 		return false;
@@ -452,7 +449,8 @@ bool CreatureEvent::executeAdvance(Player* player, skills_t skill, uint32_t oldL
 	lua_State* L = m_scriptInterface->getLuaState();
 
 	m_scriptInterface->pushFunction(m_scriptId);
-	lua_pushnumber(L, player->getID());
+	LuaScriptInterface::pushUserdata(L, player);
+	LuaScriptInterface::setMetatable(L, -1, "Player");
 	lua_pushnumber(L, static_cast<uint32_t>(skill));
 	lua_pushnumber(L, oldLevel);
 	lua_pushnumber(L, newLevel);
@@ -462,7 +460,7 @@ bool CreatureEvent::executeAdvance(Player* player, skills_t skill, uint32_t oldL
 
 bool CreatureEvent::executeOnKill(Creature* creature, Creature* target)
 {
-	//onKill(cid, target)
+	//onKill(creature, target)
 	if (!m_scriptInterface->reserveScriptEnv()) {
 		std::cout << "[Error - CreatureEvent::executeOnKill] Call stack overflow" << std::endl;
 		return false;
@@ -474,9 +472,10 @@ bool CreatureEvent::executeOnKill(Creature* creature, Creature* target)
 	lua_State* L = m_scriptInterface->getLuaState();
 
 	m_scriptInterface->pushFunction(m_scriptId);
-	lua_pushnumber(L, creature->getID());
-	lua_pushnumber(L, target->getID());
-
+	LuaScriptInterface::pushUserdata<Creature>(L, creature);
+	LuaScriptInterface::setCreatureMetatable(L, -1, creature);
+	LuaScriptInterface::pushUserdata<Creature>(L, target);
+	LuaScriptInterface::setCreatureMetatable(L, -1, target);
 	return m_scriptInterface->callFunction(2);
 }
 

@@ -235,7 +235,7 @@ class Player : public Creature, public Cylinder
 			this->guild = guild;
 		}
 
-		int8_t getGuildLevel() const {
+		uint8_t getGuildLevel() const {
 			return guildLevel;
 		}
 		void setGuildLevel(uint8_t newGuildLevel);
@@ -340,7 +340,7 @@ class Player : public Creature, public Cylinder
 			blessings &= ~blessing;
 		}
 		bool hasBlessing(uint8_t value) const {
-			return (blessings & ((uint8_t)1 << value)) != 0;
+			return (blessings & (static_cast<uint8_t>(1) << value)) != 0;
 		}
 
 		bool isOffline() const {
@@ -423,8 +423,8 @@ class Player : public Creature, public Cylinder
 
 		uint16_t getHelpers() const;
 
-		bool setVocation(uint32_t vocId);
-		uint32_t getVocationId() const {
+		bool setVocation(uint16_t vocId);
+		uint16_t getVocationId() const {
 			return vocation->getId();
 		}
 
@@ -472,23 +472,22 @@ class Player : public Creature, public Cylinder
 
 		bool removeItemOfType(uint16_t itemId, uint32_t amount, int32_t subType, bool ignoreEquipped = false) const;
 
-		double getCapacity() const {
+		uint32_t getCapacity() const {
 			if (hasFlag(PlayerFlag_CannotPickupItem)) {
-				return 0.00;
+				return 0;
 			} else if (hasFlag(PlayerFlag_HasInfiniteCapacity)) {
-				return 10000.00;
-			} else {
-				return capacity;
+				return std::numeric_limits<uint32_t>::max();
 			}
+			return capacity;
 		}
 
-		double getFreeCapacity() const {
+		uint32_t getFreeCapacity() const {
 			if (hasFlag(PlayerFlag_CannotPickupItem)) {
-				return 0.00;
+				return 0;
 			} else if (hasFlag(PlayerFlag_HasInfiniteCapacity)) {
-				return 10000.00;
+				return std::numeric_limits<uint32_t>::max();
 			} else {
-				return std::max<double>(0.00, capacity - inventoryWeight);
+				return std::max<int32_t>(0, capacity - inventoryWeight);
 			}
 		}
 
@@ -619,7 +618,7 @@ class Player : public Creature, public Cylinder
 		virtual bool hasExtraSwing() {
 			return lastAttack > 0 && ((OTSYS_TIME() - lastAttack) >= getAttackSpeed());
 		}
-		int32_t getShootRange() const {
+		uint8_t getShootRange() const {
 			return shootRange;
 		}
 
@@ -1132,7 +1131,6 @@ class Player : public Creature, public Cylinder
 		}
 
 		virtual void onThink(uint32_t interval);
-		virtual void onAttacking(uint32_t interval);
 
 		virtual void postAddNotification(Thing* thing, const Cylinder* oldParent, int32_t index, cylinderlink_t link = LINK_OWNER);
 		virtual void postRemoveNotification(Thing* thing, const Cylinder* newParent, int32_t index, bool isCompleteRemoval, cylinderlink_t link = LINK_OWNER);
@@ -1239,9 +1237,6 @@ class Player : public Creature, public Cylinder
 		time_t lastLogout;
 		time_t nextUseStaminaTime;
 
-		double inventoryWeight;
-		double capacity;
-
 		uint64_t experience;
 		uint64_t manaSpent;
 		uint64_t lastAttack;
@@ -1271,6 +1266,8 @@ class Player : public Creature, public Cylinder
 		Town* town;
 		Vocation* vocation;
 
+		uint32_t inventoryWeight;
+		uint32_t capacity;
 		uint32_t damageImmunities;
 		uint32_t conditionImmunities;
 		uint32_t conditionSuppressions;
@@ -1304,7 +1301,6 @@ class Player : public Creature, public Cylinder
 		int32_t offlineTrainingSkill;
 		int32_t offlineTrainingTime;
 		int32_t idleTime;
-		int32_t shootRange;
 
 		uint16_t lastStatsTrainingTime;
 		uint16_t staminaMinutes;
@@ -1313,6 +1309,7 @@ class Player : public Creature, public Cylinder
 
 		uint8_t blessings;
 		uint8_t guildLevel;
+		uint8_t shootRange;
 
 		PlayerSex_t sex;
 		OperatingSystem_t operatingSystem;
@@ -1364,7 +1361,7 @@ class Player : public Creature, public Cylinder
 		static uint32_t getPercentLevel(uint64_t count, uint64_t nextLevelCount);
 		double getLostPercent() const;
 		virtual uint64_t getLostExperience() const {
-			return skillLoss ? uint64_t(experience * getLostPercent()) : 0;
+			return skillLoss ? static_cast<uint64_t>(experience * getLostPercent()) : 0;
 		}
 		virtual void dropLoot(Container* corpse, Creature* _lastHitCreature);
 		virtual uint32_t getDamageImmunities() const {
