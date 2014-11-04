@@ -34,6 +34,9 @@ class Events
 		void clear();
 		bool load();
 
+		// Creature
+		bool eventCreatureOnChangeOutfit(Creature* creature, const Outfit_t& outfit);
+
 		// Party
 		bool eventPartyOnJoin(Party* party, Player* player);
 		bool eventPartyOnLeave(Party* party, Player* player);
@@ -52,9 +55,13 @@ class Events
 		bool eventPlayerOnTradeAccept(Player* player, Player* target, Item* item, Item* targetItem);
 		void eventPlayerOnGainExperience(Player* player, Creature* source, uint64_t& exp, uint64_t rawExp);
 		void eventPlayerOnLoseExperience(Player* player, uint64_t& exp);
+		void eventPlayerGetMissionDescription(Player* player, std::string &description);
 
 	private:
 		LuaScriptInterface scriptInterface;
+
+		// Creature
+		int32_t creatureOnChangeOutfit;
 
 		// Party
 		int32_t partyOnJoin;
@@ -74,6 +81,7 @@ class Events
 		int32_t playerOnTradeAccept;
 		int32_t playerOnGainExperience;
 		int32_t playerOnLoseExperience;
+		int32_t playerGetMissionDescription;
 };
 
 #endif

@@ -1,6 +1,4 @@
-function onLogin(cid)
-	local player = Player(cid)
-
+function onLogin(player)
 	local loginStr = "Welcome to " .. configManager.getString(configKeys.SERVER_NAME) .. "!"
 	if player:getLastLoginSaved() <= 0 then
 		loginStr = loginStr .. " Please choose your outfit."
@@ -15,5 +13,10 @@ function onLogin(cid)
 	player:sendTextMessage(MESSAGE_STATUS_DEFAULT, loginStr)
 
 	player:registerEvent("PlayerDeath")
+	return true
+end
+
+--It happens when player is kicked by another client or its re-enter the game after exited
+function onReLogin(player)
 	return true
 end

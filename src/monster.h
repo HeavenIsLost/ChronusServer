@@ -83,7 +83,7 @@ class Monster : public Creature
 		virtual const Position& getMasterPos() const {
 			return masterPos;
 		}
-		void setMasterPos(const Position& pos, uint32_t radius = 1) {
+		void setMasterPos(const Position& pos, int32_t radius = 1) {
 			masterPos = pos;
 			masterRadius = radius;
 		}
@@ -98,7 +98,7 @@ class Monster : public Creature
 			return mType->defense;
 		}
 		virtual bool isPushable() const {
-			return mType->pushable && (baseSpeed > 0);
+			return mType->pushable && baseSpeed != 0;
 		}
 		virtual bool isAttackable() const {
 			return mType->isAttackable;
@@ -236,7 +236,7 @@ class Monster : public Creature
 
 		bool canUseAttack(const Position& pos, const Creature* target) const;
 		bool canUseSpell(const Position& pos, const Position& targetPos,
-		                 const spellBlock_t& sb, uint32_t interval, bool& inRange);
+		                 const spellBlock_t& sb, uint32_t interval, bool& inRange, bool& resetTicks);
 		bool getRandomStep(const Position& creaturePos, Direction& dir);
 		bool getDanceStep(const Position& creaturePos, Direction& dir,
 		                  bool keepAttack = true, bool keepDistance = true);

@@ -2,6 +2,7 @@
 <talkactions>
 	<!-- commands -->
 	<talkaction words="/reload" separator=" " group="2" accountType="5" log="yes" script="reload.lua" />
+	<talkaction words="/storage" groupId="3" accountType="5" log="yes" separator=" " script="storage.lua"/>
 	<talkaction words="/ban" separator=" " script="ban.lua" />
 	<talkaction words="/ipban" separator=" " script="ipban.lua" />
 	<talkaction words="/unban" separator=" " script="unban.lua" />

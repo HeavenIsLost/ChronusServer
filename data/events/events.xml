@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <events>
+	<!-- Creature methods -->
+	<event class="Creature" method="onChangeOutfit" enabled="0" />
+
 	<!-- Party methods -->
 	<event class="Party" method="onJoin" enabled="0" />
 	<event class="Party" method="onLeave" enabled="0" />
@@ -18,4 +21,5 @@
 	<event class="Player" method="onTradeAccept" enabled="0" />
 	<event class="Player" method="onGainExperience" enabled="0" />
 	<event class="Player" method="onLoseExperience" enabled="0" />
+	<event class="Player" method="getMissionDescription" enabled="1" />
 </events>

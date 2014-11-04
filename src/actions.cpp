@@ -91,10 +91,7 @@ Event* Actions::getEvent(const std::string& nodeName)
 
 bool Actions::registerEvent(Event* event, const pugi::xml_node& node)
 {
-	Action* action = dynamic_cast<Action*>(event);
-	if (!action) {
-		return false;
-	}
+	Action* action = static_cast<Action*>(event);
 
 	pugi::xml_attribute attr;
 	if ((attr = node.attribute("itemid"))) {
@@ -555,7 +552,7 @@ ReturnValue Action::canExecuteAction(const Player* player, const Position& toPos
 
 bool Action::executeUse(Player* player, Item* item, const PositionEx& fromPos, const PositionEx& toPos, bool extendedUse, uint32_t, bool isHotkey)
 {
-	//onUse(cid, item, fromPosition, itemEx, toPosition, isHotkey)
+	//onUse(player, item, fromPosition, itemEx, toPosition, isHotkey)
 	if (!m_scriptInterface->reserveScriptEnv()) {
 		std::cout << "[Error - Action::executeUse] Call stack overflow" << std::endl;
 		return false;
@@ -567,9 +564,14 @@ bool Action::executeUse(Player* player, Item* item, const PositionEx& fromPos, c
 	lua_State* L = m_scriptInterface->getLuaState();
 
 	m_scriptInterface->pushFunction(m_scriptId);
-	lua_pushnumber(L, player->getID());
+
+	LuaScriptInterface::pushUserdata<Player>(L, player);
+	LuaScriptInterface::setMetatable(L, -1, "Player");
+
 	LuaScriptInterface::pushThing(L, item, env->addThing(item));
+
 	LuaScriptInterface::pushPosition(L, fromPos, fromPos.stackpos);
+
 	Thing* thing = g_game.internalGetThing(player, toPos, toPos.stackpos);
 	if (thing && (!extendedUse || thing != item)) {
 		LuaScriptInterface::pushThing(L, thing, env->addThing(thing));

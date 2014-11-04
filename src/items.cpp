@@ -221,9 +221,9 @@ int32_t Items::loadFromOtb(const std::string& file)
 		uint16_t serverId = 0;
 		uint16_t clientId = 0;
 		uint16_t speed = 0;
-		uint16_t lightLevel = 0;
-		uint16_t lightColor = 0;
 		uint16_t wareId = 0;
+		uint8_t lightLevel = 0;
+		uint8_t lightColor = 0;
 		uint8_t alwaysOnTopOrder = 0;
 
 		uint8_t attrib;
@@ -281,8 +281,8 @@ int32_t Items::loadFromOtb(const std::string& file)
 						return ERROR_INVALID_FORMAT;
 					}
 
-					lightLevel = lb2->lightLevel;
-					lightColor = lb2->lightColor;
+					lightLevel = static_cast<uint8_t>(lb2->lightLevel);
+					lightColor = static_cast<uint8_t>(lb2->lightColor);
 					break;
 				}
 
@@ -497,7 +497,7 @@ void Items::parseItemNode(const pugi::xml_node& itemNode, uint32_t id)
 		} else if (tmpStrValue == "runespellname") {
 			it.runeSpellName = valueAttribute.as_string();
 		} else if (tmpStrValue == "weight") {
-			it.weight = pugi::cast<uint32_t>(valueAttribute.value()) / 100.f;
+			it.weight = pugi::cast<uint32_t>(valueAttribute.value());
 		} else if (tmpStrValue == "showcount") {
 			it.showCount = valueAttribute.as_bool();
 		} else if (tmpStrValue == "armor") {
@@ -672,7 +672,7 @@ void Items::parseItemNode(const pugi::xml_node& itemNode, uint32_t id)
 				std::cout << "[Warning - Items::parseItemNode] Unknown effect: " << valueAttribute.as_string() << std::endl;
 			}
 		} else if (tmpStrValue == "range") {
-			it.shootRange = pugi::cast<int32_t>(valueAttribute.value());
+			it.shootRange = pugi::cast<uint16_t>(valueAttribute.value());
 		} else if (tmpStrValue == "stopduration") {
 			it.stopTime = valueAttribute.as_bool();
 		} else if (tmpStrValue == "decayto") {

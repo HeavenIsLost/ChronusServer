@@ -40,7 +40,8 @@ enum CreatureEventType_t {
 	CREATURE_EVENT_MANACHANGE,
 	CREATURE_EVENT_EXTENDED_OPCODE, // otclient additional network opcodes
 	CREATURE_EVENT_COMBAT,
-	CREATURE_EVENT_COMBATAREA
+	CREATURE_EVENT_COMBATAREA,
+	CREATURE_EVENT_RELOGIN
 };
 
 class CreatureEvent;
@@ -53,6 +54,7 @@ class CreatureEvents : public BaseEvents
 
 		// global events
 		bool playerLogin(Player* player) const;
+		bool playerReLogin(Player* player) const;
 		bool playerLogout(Player* player) const;
 		bool playerAdvance(Player* player, skills_t, uint32_t, uint32_t);
 
@@ -95,6 +97,7 @@ class CreatureEvent : public Event
 
 		//scripting
 		bool executeOnLogin(Player* player);
+		bool executeOnReLogin(Player* player);
 		bool executeOnLogout(Player* player);
 		bool executeOnThink(Creature* creature, uint32_t interval);
 		bool executeOnPrepareDeath(Creature* creature, Creature* killer);

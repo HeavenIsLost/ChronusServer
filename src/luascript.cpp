@@ -1628,7 +1628,6 @@ void LuaScriptInterface::registerFunctions()
 	registerEnum(TALKTYPE_MONSTER_SAY)
 	registerEnum(TALKTYPE_MONSTER_YELL)
 	registerEnum(TALKTYPE_CHANNEL_R2)
-	registerEnum(TALKTYPE_CHANNEL_W)
 
 	registerEnum(TEXTCOLOR_BLUE)
 	registerEnum(TEXTCOLOR_LIGHTGREEN)
@@ -2878,7 +2877,7 @@ int32_t LuaScriptInterface::luaDoPlayerAddItem(lua_State* L)
 		itemCount = std::max<int32_t>(1, count);
 	} else if (it.hasSubType()) {
 		if (it.stackable) {
-			itemCount = (int32_t)std::ceil(static_cast<float>(count) / 100);
+			itemCount = static_cast<int32_t>(std::ceil(static_cast<float>(count) / 100));
 		} else {
 			itemCount = 1;
 		}
@@ -3042,7 +3041,7 @@ int32_t LuaScriptInterface::luaDoCreateItem(lua_State* L)
 	const ItemType& it = Item::items[itemId];
 	if (it.hasSubType()) {
 		if (it.stackable) {
-			itemCount = (int32_t)std::ceil(static_cast<float>(count) / 100);
+			itemCount = static_cast<int32_t>(std::ceil(static_cast<float>(count) / 100));
 		}
 
 		subType = count;
@@ -4043,7 +4042,7 @@ int32_t LuaScriptInterface::luaDoAddContainerItem(lua_State* L)
 
 	if (it.hasSubType()) {
 		if (it.stackable) {
-			itemCount = (int32_t)std::ceil(static_cast<float>(count) / 100);
+			itemCount = static_cast<int32_t>(std::ceil(static_cast<float>(count) / 100));
 		}
 
 		subType = count;
@@ -4138,8 +4137,8 @@ int32_t LuaScriptInterface::luaDoSetCreatureLight(lua_State* L)
 		return 1;
 	}
 
-	uint8_t level = getNumber<uint8_t>(L, 2);
-	uint8_t color = getNumber<uint8_t>(L, 3);
+	uint16_t level = getNumber<uint16_t>(L, 2);
+	uint16_t color = getNumber<uint16_t>(L, 3);
 	uint32_t time = getNumber<uint32_t>(L, 4);
 	Condition* condition = Condition::createCondition(CONDITIONID_COMBAT, CONDITION_LIGHT, time, level | (color << 8));
 	creature->addCondition(condition);
@@ -7471,8 +7470,8 @@ int32_t LuaScriptInterface::luaCreatureSetLight(lua_State* L)
 	}
 
 	LightInfo light;
-	light.color = getNumber<uint32_t>(L, 2);;
-	light.level = getNumber<uint32_t>(L, 3);
+	light.color = getNumber<uint8_t>(L, 2);
+	light.level = getNumber<uint8_t>(L, 3);
 	creature->setCreatureLight(light);
 	g_game.changeLight(creature);
 	pushBoolean(L, true);
@@ -8108,7 +8107,7 @@ int32_t LuaScriptInterface::luaPlayerGetCapacity(lua_State* L)
 	// player:getCapacity()
 	Player* player = getUserdata<Player>(L, 1);
 	if (player) {
-		lua_pushnumber(L, static_cast<uint64_t>(player->getCapacity() * 100));
+		lua_pushnumber(L, player->getCapacity());
 	} else {
 		lua_pushnil(L);
 	}
@@ -8120,7 +8119,7 @@ int32_t LuaScriptInterface::luaPlayerSetCapacity(lua_State* L)
 	// player:setCapacity(capacity)
 	Player* player = getUserdata<Player>(L, 1);
 	if (player) {
-		player->capacity = std::max(0.0, std::min<double>(10000.0, getNumber<double>(L, 2) / 100));
+		player->capacity = getNumber<uint32_t>(L, 2);
 		player->sendStats();
 		pushBoolean(L, true);
 	} else {
@@ -8134,7 +8133,7 @@ int32_t LuaScriptInterface::luaPlayerGetFreeCapacity(lua_State* L)
 	// player:getFreeCapacity()
 	Player* player = getUserdata<Player>(L, 1);
 	if (player) {
-		lua_pushnumber(L, static_cast<uint64_t>(player->getFreeCapacity() * 100));
+		lua_pushnumber(L, player->getFreeCapacity());
 	} else {
 		lua_pushnil(L);
 	}
@@ -11229,7 +11228,7 @@ int32_t LuaScriptInterface::luaItemTypeGetWeight(lua_State* L)
 		return 1;
 	}
 
-	uint64_t weight = (itemType->weight * std::max<int32_t>(1, count)) * 100;
+	uint64_t weight = (itemType->weight * std::max<int32_t>(1, count));
 	lua_pushnumber(L, weight);
 	return 1;
 }

@@ -87,14 +87,10 @@ class ProtocolGame : public Protocol
 			return version;
 		}
 
-		const std::unordered_set<uint32_t>& getKnownCreatures() const {
-			return knownCreatureSet;
-		}
-
 	private:
 		std::unordered_set<uint32_t> knownCreatureSet;
 
-		void connect(uint32_t playerId, OperatingSystem_t operatingSystem);
+		void connect(uint32_t playerId, OperatingSystem_t operatingSystem, bool reLogin = false);
 		void disconnect();
 		void disconnectClient(const std::string& message);
 		void writeToOutputBuffer(const NetworkMessage& msg);

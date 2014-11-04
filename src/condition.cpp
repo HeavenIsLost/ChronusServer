@@ -140,16 +140,16 @@ bool Condition::unserializeProp(ConditionAttr_t attr, PropStream& propStream)
 bool Condition::serialize(PropWriteStream& propWriteStream)
 {
 	propWriteStream.ADD_UCHAR(CONDITIONATTR_TYPE);
-	propWriteStream.ADD_VALUE((int32_t)conditionType);
+	propWriteStream.ADD_ULONG(conditionType);
 
 	propWriteStream.ADD_UCHAR(CONDITIONATTR_ID);
-	propWriteStream.ADD_VALUE((int32_t)id);
+	propWriteStream.ADD_ULONG(id);
 
 	propWriteStream.ADD_UCHAR(CONDITIONATTR_TICKS);
 	propWriteStream.ADD_VALUE(ticks);
 
 	propWriteStream.ADD_UCHAR(CONDITIONATTR_ISBUFF);
-	propWriteStream.ADD_VALUE((int8_t)isBuff);
+	propWriteStream.ADD_VALUE(static_cast<uint8_t>(isBuff));
 
 	propWriteStream.ADD_UCHAR(CONDITIONATTR_SUBID);
 	propWriteStream.ADD_VALUE(subId);
@@ -478,19 +478,19 @@ void ConditionAttributes::updatePercentStats(Player* player)
 
 		switch (i) {
 			case STAT_MAXHITPOINTS:
-				stats[i] = (int32_t)(player->getMaxHealth() * ((statsPercent[i] - 100) / 100.f));
+				stats[i] = static_cast<int32_t>(player->getMaxHealth() * ((statsPercent[i] - 100) / 100.f));
 				break;
 
 			case STAT_MAXMANAPOINTS:
-				stats[i] = (int32_t)(player->getMaxMana() * ((statsPercent[i] - 100) / 100.f));
+				stats[i] = static_cast<int32_t>(player->getMaxMana() * ((statsPercent[i] - 100) / 100.f));
 				break;
 
 			case STAT_SOULPOINTS:
-				stats[i] = (int32_t)(player->getPlayerInfo(PLAYERINFO_SOUL) * ((statsPercent[i] - 100) / 100.f));
+				stats[i] = static_cast<int32_t>(player->getPlayerInfo(PLAYERINFO_SOUL) * ((statsPercent[i] - 100) / 100.f));
 				break;
 
 			case STAT_MAGICPOINTS:
-				stats[i] = (int32_t)(player->getMagicLevel() * ((statsPercent[i] - 100) / 100.f));
+				stats[i] = static_cast<int32_t>(player->getMagicLevel() * ((statsPercent[i] - 100) / 100.f));
 				break;
 		}
 	}
@@ -520,7 +520,7 @@ void ConditionAttributes::updatePercentSkills(Player* player)
 		}
 
 		int32_t currSkill = player->getSkill((skills_t)i, SKILLVALUE_LEVEL);
-		skills[i] = (int32_t)(currSkill * ((skillsPercent[i] - 100) / 100.f));
+		skills[i] = static_cast<int32_t>(currSkill * ((skillsPercent[i] - 100) / 100.f));
 	}
 }
 
@@ -1403,8 +1403,8 @@ void ConditionSpeed::setFormulaVars(float _mina, float _minb, float _maxa, float
 
 void ConditionSpeed::getFormulaValues(int32_t var, int32_t& min, int32_t& max) const
 {
-	min = (int32_t)std::ceil(var * 1.f * mina + minb);
-	max = (int32_t)std::ceil(var * 1.f * maxa + maxb);
+	min = (var * mina) + minb;
+	max = (var * maxa) + maxb;
 }
 
 bool ConditionSpeed::setParam(ConditionParam_t param, int32_t value)
@@ -1656,7 +1656,7 @@ void ConditionOutfit::addCondition(Creature* creature, const Condition* addCondi
 	}
 }
 
-ConditionLight::ConditionLight(ConditionId_t _id, ConditionType_t _type, int32_t _ticks, bool _buff, uint32_t _subId, int32_t _lightlevel, int32_t _lightcolor) :
+ConditionLight::ConditionLight(ConditionId_t _id, ConditionType_t _type, int32_t _ticks, bool _buff, uint32_t _subId, uint8_t _lightlevel, uint8_t _lightcolor) :
 	Condition(_id, _type, _ticks, _buff, _subId)
 {
 	lightInfo.level = _lightlevel;
@@ -1758,21 +1758,9 @@ bool ConditionLight::unserializeProp(ConditionAttr_t attr, PropStream& propStrea
 		lightInfo.level = value;
 		return true;
 	} else if (attr == CONDITIONATTR_LIGHTTICKS) {
-		uint32_t value;
-		if (!propStream.GET_VALUE(value)) {
-			return false;
-		}
-
-		internalLightTicks = value;
-		return true;
+		return propStream.GET_VALUE(internalLightTicks);
 	} else if (attr == CONDITIONATTR_LIGHTINTERVAL) {
-		uint32_t value;
-		if (!propStream.GET_VALUE(value)) {
-			return false;
-		}
-
-		lightChangeInterval = value;
-		return true;
+		return propStream.GET_VALUE(lightChangeInterval);
 	}
 
 	return Condition::unserializeProp(attr, propStream);
@@ -1784,11 +1772,14 @@ bool ConditionLight::serialize(PropWriteStream& propWriteStream)
 		return false;
 	}
 
+	// TODO: color and level could be serialized as 8-bit if we can retain backwards
+	// compatibility, but perhaps we should keep it like this in case they increase
+	// in the future...
 	propWriteStream.ADD_UCHAR(CONDITIONATTR_LIGHTCOLOR);
-	propWriteStream.ADD_VALUE(lightInfo.color);
+	propWriteStream.ADD_ULONG(lightInfo.color);
 
 	propWriteStream.ADD_UCHAR(CONDITIONATTR_LIGHTLEVEL);
-	propWriteStream.ADD_VALUE(lightInfo.level);
+	propWriteStream.ADD_ULONG(lightInfo.level);
 
 	propWriteStream.ADD_UCHAR(CONDITIONATTR_LIGHTTICKS);
 	propWriteStream.ADD_VALUE(internalLightTicks);

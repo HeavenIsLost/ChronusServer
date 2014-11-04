@@ -145,7 +145,7 @@ class ItemAttributes
 			setIntAttr(ITEM_ATTRIBUTE_ACTIONID, n);
 		}
 		uint16_t getActionId() const {
-			return (uint16_t)getIntAttr(ITEM_ATTRIBUTE_ACTIONID);
+			return static_cast<uint16_t>(getIntAttr(ITEM_ATTRIBUTE_ACTIONID));
 		}
 
 		void setUniqueId(uint16_t n) {
@@ -156,21 +156,21 @@ class ItemAttributes
 			setIntAttr(ITEM_ATTRIBUTE_UNIQUEID, n);
 		}
 		uint16_t getUniqueId() const {
-			return (uint16_t)getIntAttr(ITEM_ATTRIBUTE_UNIQUEID);
+			return static_cast<uint16_t>(getIntAttr(ITEM_ATTRIBUTE_UNIQUEID));
 		}
 
 		void setCharges(uint16_t n) {
 			setIntAttr(ITEM_ATTRIBUTE_CHARGES, n);
 		}
 		uint16_t getCharges() const {
-			return (uint16_t)getIntAttr(ITEM_ATTRIBUTE_CHARGES);
+			return static_cast<uint16_t>(getIntAttr(ITEM_ATTRIBUTE_CHARGES));
 		}
 
 		void setFluidType(uint16_t n) {
 			setIntAttr(ITEM_ATTRIBUTE_FLUIDTYPE, n);
 		}
 		uint16_t getFluidType() const {
-			return (uint16_t)getIntAttr(ITEM_ATTRIBUTE_FLUIDTYPE);
+			return static_cast<uint16_t>(getIntAttr(ITEM_ATTRIBUTE_FLUIDTYPE));
 		}
 
 		void setOwner(uint32_t _owner) {
@@ -436,14 +436,14 @@ class Item : virtual public Thing
 			if (!attributes) {
 				return 0;
 			}
-			return (uint16_t)getIntAttr(ITEM_ATTRIBUTE_ACTIONID);
+			return static_cast<uint16_t>(getIntAttr(ITEM_ATTRIBUTE_ACTIONID));
 		}
 
 		uint16_t getUniqueId() const {
 			if (!attributes) {
 				return 0;
 			}
-			return (uint16_t)getIntAttr(ITEM_ATTRIBUTE_UNIQUEID);
+			return static_cast<uint16_t>(getIntAttr(ITEM_ATTRIBUTE_UNIQUEID));
 		}
 
 		void setCharges(uint16_t n) {
@@ -453,7 +453,7 @@ class Item : virtual public Thing
 			if (!attributes) {
 				return 0;
 			}
-			return (uint16_t)getIntAttr(ITEM_ATTRIBUTE_CHARGES);
+			return static_cast<uint16_t>(getIntAttr(ITEM_ATTRIBUTE_CHARGES));
 		}
 
 		void setFluidType(uint16_t n) {
@@ -463,7 +463,7 @@ class Item : virtual public Thing
 			if (!attributes) {
 				return 0;
 			}
-			return (uint16_t)getIntAttr(ITEM_ATTRIBUTE_FLUIDTYPE);
+			return static_cast<uint16_t>(getIntAttr(ITEM_ATTRIBUTE_FLUIDTYPE));
 		}
 
 		void setOwner(uint32_t _owner) {
@@ -511,7 +511,7 @@ class Item : virtual public Thing
 
 		static std::string getDescription(const ItemType& it, int32_t lookDistance, const Item* item = nullptr, int32_t subType = -1, bool addArticle = true);
 		static std::string getNameDescription(const ItemType& it, const Item* item = nullptr, int32_t subType = -1, bool addArticle = true);
-		static std::string getWeightDescription(const ItemType& it, double weight, uint32_t count = 1);
+		static std::string getWeightDescription(const ItemType& it, uint32_t weight, uint32_t count = 1);
 
 		virtual std::string getDescription(int32_t lookDistance) const;
 		std::string getNameDescription() const;
@@ -552,11 +552,11 @@ class Item : virtual public Thing
 		Ammo_t	getAmmoType() const {
 			return items[id].ammoType;
 		}
-		int32_t getShootRange() const {
+		uint8_t getShootRange() const {
 			return items[id].shootRange;
 		}
 
-		virtual double getWeight() const;
+		virtual uint32_t getWeight() const;
 		int32_t getAttack() const {
 			return items[id].attack;
 		}
@@ -760,7 +760,7 @@ class Item : virtual public Thing
 		}
 
 	protected:
-		std::string getWeightDescription(double weight) const;
+		std::string getWeightDescription(uint32_t weight) const;
 
 		Cylinder* parent;
 		ItemAttributes* attributes;

@@ -62,7 +62,7 @@ Player::Player(ProtocolGame* p) :
 
 	accountNumber = 0;
 	setVocation(0);
-	capacity = 400.00;
+	capacity = 40000;
 	mana = 0;
 	manaMax = 0;
 	manaSpent = 0;
@@ -191,7 +191,7 @@ Player::Player(ProtocolGame* p) :
 
 	lastQuestlogUpdate = 0;
 
-	inventoryWeight = 0.00;
+	inventoryWeight = 0;
 }
 
 Player::~Player()
@@ -218,7 +218,7 @@ Player::~Player()
 	setEditHouse(nullptr);
 }
 
-bool Player::setVocation(uint32_t vocId)
+bool Player::setVocation(uint16_t vocId)
 {
 	Vocation* voc = g_vocations.getVocation(vocId);
 	if (!voc) {
@@ -457,7 +457,7 @@ int32_t Player::getArmor() const
 			armor += inventoryItem->getArmor();
 		}
 	}
-	return int32_t(armor * vocation->armorMultiplier);
+	return static_cast<int32_t>(armor * vocation->armorMultiplier);
 }
 
 void Player::getShieldAndWeapon(const Item*& shield, const Item*& weapon) const
@@ -516,8 +516,8 @@ int32_t Player::getDefense() const
 		return 0;
 	}
 
-	defenseValue = int32_t(defenseValue * vocation->defenseMultiplier);
-	return ((int32_t)std::ceil(((float)(defenseSkill * (defenseValue * 0.015)) + (defenseValue * 0.1)) * defenseFactor));
+	defenseValue = static_cast<int32_t>(defenseValue * vocation->defenseMultiplier);
+	return static_cast<int32_t>(std::ceil(((float)(defenseSkill * (defenseValue * 0.015)) + (defenseValue * 0.1)) * defenseFactor));
 }
 
 float Player::getAttackFactor() const
@@ -586,7 +586,7 @@ void Player::updateInventoryWeight()
 		return;
 	}
 
-	inventoryWeight = 0.00;
+	inventoryWeight = 0;
 	for (int i = CONST_SLOT_FIRST; i <= CONST_SLOT_LAST; ++i) {
 		const Item* item = inventory[i];
 		if (item) {
@@ -1874,9 +1874,7 @@ void Player::addExperience(Creature* source, uint64_t exp, bool sendText/* = fal
 		mana = manaMax;
 
 		updateBaseSpeed();
-
-		int32_t newSpeed = getBaseSpeed();
-		setBaseSpeed(newSpeed);
+		setBaseSpeed(getBaseSpeed());
 
 		g_game.changeSpeed(this, 0);
 		g_game.addCreatureHealth(this);
@@ -1944,7 +1942,7 @@ void Player::removeExperience(uint64_t exp, bool sendText/* = false*/)
 		--level;
 		healthMax = std::max<int32_t>(0, healthMax - vocation->getHPGain());
 		manaMax = std::max<int32_t>(0, manaMax - vocation->getManaGain());
-		capacity = std::max<double>(0.00, capacity - vocation->getCapGain());
+		capacity = std::max<int32_t>(0, capacity - (vocation->getCapGain() * 100));
 		currLevelExp = Player::getExpForLevel(level);
 	}
 
@@ -1953,9 +1951,7 @@ void Player::removeExperience(uint64_t exp, bool sendText/* = false*/)
 		mana = manaMax;
 
 		updateBaseSpeed();
-
-		int32_t newSpeed = getBaseSpeed();
-		setBaseSpeed(newSpeed);
+		setBaseSpeed(getBaseSpeed());
 
 		g_game.changeSpeed(this, 0);
 		g_game.addCreatureHealth(this);
@@ -2163,7 +2159,7 @@ void Player::death(Creature* _lastHitCreature)
 
 		double deathLossPercent = getLostPercent() * (unfairFightReduction / 100.);
 
-		lostMana = (uint64_t)(sumMana * deathLossPercent);
+		lostMana = static_cast<uint64_t>(sumMana * deathLossPercent);
 
 		while (lostMana > manaSpent && magLevel > 0) {
 			lostMana -= manaSpent;
@@ -2189,7 +2185,7 @@ void Player::death(Creature* _lastHitCreature)
 
 			sumSkillTries += skills[i][SKILLVALUE_TRIES];
 
-			uint32_t lostSkillTries = (uint32_t)(sumSkillTries * deathLossPercent);
+			uint32_t lostSkillTries = static_cast<uint32_t>(sumSkillTries * deathLossPercent);
 			while (lostSkillTries > skills[i][SKILLVALUE_TRIES]) {
 				lostSkillTries -= skills[i][SKILLVALUE_TRIES];
 
@@ -2209,7 +2205,7 @@ void Player::death(Creature* _lastHitCreature)
 		}
 
 		//Level loss
-		uint64_t expLoss = (uint64_t)(experience * deathLossPercent);
+		uint64_t expLoss = static_cast<uint64_t>(experience * deathLossPercent);
 		g_events->eventPlayerOnLoseExperience(this, expLoss);
 
 		if (expLoss != 0) {
@@ -2223,7 +2219,7 @@ void Player::death(Creature* _lastHitCreature)
 				--level;
 				healthMax = std::max<int32_t>(0, healthMax - vocation->getHPGain());
 				manaMax = std::max<int32_t>(0, manaMax - vocation->getManaGain());
-				capacity = std::max<double>(0.00, capacity - vocation->getCapGain());
+				capacity = std::max<int32_t>(0, capacity - (vocation->getCapGain() * 100));
 			}
 
 			if (oldLevel != level) {
@@ -2588,10 +2584,17 @@ ReturnValue Player::__queryAdd(int32_t index, const Thing* thing, uint32_t count
 				if (!g_config.getBoolean(ConfigManager::CLASSIC_EQUIPMENT_SLOTS)) {
 					if (item->getWeaponType() != WEAPON_SHIELD) {
 						ret = RETURNVALUE_CANNOTBEDRESSED;
-					} else if (inventory[CONST_SLOT_LEFT] && (slotPosition & SLOTP_TWO_HAND)) {
-						ret = RETURNVALUE_BOTHHANDSNEEDTOBEFREE;
 					} else {
-						ret = RETURNVALUE_NOERROR;
+						const Item* leftItem = inventory[CONST_SLOT_LEFT];
+						if (leftItem) {
+							if ((leftItem->getSlotPosition() | slotPosition) & SLOTP_TWO_HAND) {
+								ret = RETURNVALUE_BOTHHANDSNEEDTOBEFREE;
+							} else {
+								ret = RETURNVALUE_NOERROR;
+							}
+						} else {
+							ret = RETURNVALUE_NOERROR;
+						}
 					}
 				} else if (slotPosition & SLOTP_TWO_HAND) {
 					if (inventory[CONST_SLOT_LEFT] && inventory[CONST_SLOT_LEFT] != item) {
@@ -3034,7 +3037,7 @@ void Player::__removeThing(Thing* thing, uint32_t count)
 			item->setParent(nullptr);
 			inventory[index] = nullptr;
 		} else {
-			uint8_t newCount = (uint8_t)std::max<int32_t>(0, item->getItemCount() - count);
+			uint8_t newCount = static_cast<uint8_t>(std::max<int32_t>(0, item->getItemCount() - count));
 			item->setItemCount(newCount);
 
 			//send change to client
@@ -3407,11 +3410,6 @@ void Player::getPathSearchParams(const Creature* creature, FindPathParams& fpp) 
 	fpp.fullPathSearch = true;
 }
 
-void Player::onAttacking(uint32_t interval)
-{
-	Creature::onAttacking(interval);
-}
-
 void Player::doAttacking(uint32_t)
 {
 	if (lastAttack == 0) {
@@ -3452,7 +3450,7 @@ uint64_t Player::getGainedExperience(Creature* attacker) const
 {
 	if (g_config.getBoolean(ConfigManager::EXPERIENCE_FROM_PLAYERS)) {
 		Player* attackerPlayer = attacker->getPlayer();
-		if (attackerPlayer && attackerPlayer != this && skillLoss && std::abs((int32_t)(attackerPlayer->getLevel() - level)) <= g_config.getNumber(ConfigManager::EXP_FROM_PLAYERS_LEVEL_RANGE)) {
+		if (attackerPlayer && attackerPlayer != this && skillLoss && std::abs(static_cast<int32_t>(attackerPlayer->getLevel() - level)) <= g_config.getNumber(ConfigManager::EXP_FROM_PLAYERS_LEVEL_RANGE)) {
 			return std::max<uint64_t>(0, std::floor(getLostExperience() * getDamageRatio(attacker) * 0.75));
 		}
 	}
@@ -4098,7 +4096,7 @@ void Player::checkSkullTicks(int32_t ticks)
 
 bool Player::isPromoted() const
 {
-	int32_t promotedVocation = g_vocations.getPromotedVocation(vocation->getId());
+	uint16_t promotedVocation = g_vocations.getPromotedVocation(vocation->getId());
 	return promotedVocation == 0 && vocation->getId() != promotedVocation;
 }
 
@@ -4114,7 +4112,7 @@ double Player::getLostPercent() const
 			lossPercent -= 3;
 		}
 
-		lossPercent -= (int32_t)bitset.count();
+		lossPercent -= static_cast<int32_t>(bitset.count());
 		return std::max<int32_t>(0, lossPercent) / (double)100;
 	} else {
 		double lossPercent;
@@ -4130,7 +4128,7 @@ double Player::getLostPercent() const
 			lossPercent *= 0.7;
 		}
 
-		return lossPercent * pow(0.92, (int32_t)bitset.count()) / 100;
+		return lossPercent * pow(0.92, static_cast<int32_t>(bitset.count())) / 100;
 	}
 }
 

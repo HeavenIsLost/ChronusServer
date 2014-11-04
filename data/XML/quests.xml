@@ -10,5 +10,9 @@
 			<missionstate id="4" description="Example description 1"/>
 			<missionstate id="5" description="Example description 2"/>
 		</mission>
+		<!-- dinamic quest description, look on data/system/missionDescription.lua -->
+		<mission name="Example Mission 3" custom="true" storageid="1001" startvalue="6" endvalue="6">
+			<missionstate id="6" description="BeingCoolDescriptionId"/>
+		</mission>
 	</quest>
 </quests>

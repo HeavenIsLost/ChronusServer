@@ -604,7 +604,7 @@ BlockType_t Monster::blockHit(Creature* attacker, CombatType_t combatType, int32
 		}
 
 		if (elementMod != 0) {
-			damage = (int32_t)std::ceil(damage * ((float)(100 - elementMod) / 100));
+			damage = static_cast<int32_t>(std::ceil(damage * ((float)(100 - elementMod) / 100)));
 			if (damage <= 0) {
 				damage = 0;
 				blockType = BLOCK_DEFENSE;
@@ -778,6 +778,7 @@ void Monster::doAttacking(uint32_t interval)
 	}
 
 	bool updateLook = true;
+	bool resetTicks = interval != 0;
 	attackTicks += interval;
 
 	const Position& myPos = getPosition();
@@ -786,8 +787,8 @@ void Monster::doAttacking(uint32_t interval)
 	for (const spellBlock_t& spellBlock : mType->spellAttackList) {
 		bool inRange = false;
 
-		if (canUseSpell(myPos, targetPos, spellBlock, interval, inRange)) {
-			if (spellBlock.chance >= (uint32_t)uniform_random(1, 100)) {
+		if (canUseSpell(myPos, targetPos, spellBlock, interval, inRange, resetTicks)) {
+			if (spellBlock.chance >= static_cast<uint32_t>(uniform_random(1, 100))) {
 				if (updateLook) {
 					updateLookDirection();
 					updateLook = false;
@@ -816,7 +817,7 @@ void Monster::doAttacking(uint32_t interval)
 		updateLookDirection();
 	}
 
-	if (interval != 0) {
+	if (resetTicks) {
 		attackTicks = 0;
 	}
 }
@@ -837,7 +838,7 @@ bool Monster::canUseAttack(const Position& pos, const Creature* target) const
 }
 
 bool Monster::canUseSpell(const Position& pos, const Position& targetPos,
-                          const spellBlock_t& sb, uint32_t interval, bool& inRange)
+                          const spellBlock_t& sb, uint32_t interval, bool& inRange, bool& resetTicks)
 {
 	inRange = true;
 
@@ -853,6 +854,7 @@ bool Monster::canUseSpell(const Position& pos, const Position& targetPos,
 
 	if (!sb.isMelee || !extraMeleeAttack) {
 		if (sb.speed > attackTicks) {
+			resetTicks = false;
 			return false;
 		}
 
@@ -872,7 +874,7 @@ bool Monster::canUseSpell(const Position& pos, const Position& targetPos,
 void Monster::onThinkTarget(uint32_t interval)
 {
 	if (!isSummon()) {
-		if (mType->changeTargetSpeed > 0) {
+		if (mType->changeTargetSpeed != 0) {
 			bool canChangeTarget = true;
 
 			if (targetChangeCooldown > 0) {
@@ -880,7 +882,7 @@ void Monster::onThinkTarget(uint32_t interval)
 
 				if (targetChangeCooldown <= 0) {
 					targetChangeCooldown = 0;
-					targetChangeTicks = (uint32_t)mType->changeTargetSpeed;
+					targetChangeTicks = mType->changeTargetSpeed;
 				} else {
 					canChangeTarget = false;
 				}
@@ -889,9 +891,9 @@ void Monster::onThinkTarget(uint32_t interval)
 			if (canChangeTarget) {
 				targetChangeTicks += interval;
 
-				if (targetChangeTicks >= (uint32_t)mType->changeTargetSpeed) {
+				if (targetChangeTicks >= mType->changeTargetSpeed) {
 					targetChangeTicks = 0;
-					targetChangeCooldown = (uint32_t)mType->changeTargetSpeed;
+					targetChangeCooldown = mType->changeTargetSpeed;
 
 					if (mType->changeTargetChance >= uniform_random(1, 100)) {
 						if (mType->targetDistance <= 1) {
@@ -922,7 +924,7 @@ void Monster::onThinkDefense(uint32_t interval)
 			continue;
 		}
 
-		if ((spellBlock.chance >= (uint32_t)uniform_random(1, 100))) {
+		if ((spellBlock.chance >= static_cast<uint32_t>(uniform_random(1, 100)))) {
 			minCombatValue = spellBlock.minCombatValue;
 			maxCombatValue = spellBlock.maxCombatValue;
 			spellBlock.spell->castSpell(this, this);
@@ -945,7 +947,7 @@ void Monster::onThinkDefense(uint32_t interval)
 				continue;
 			}
 
-			if (summonBlock.chance < (uint32_t)uniform_random(1, 100)) {
+			if (summonBlock.chance < static_cast<uint32_t>(uniform_random(1, 100))) {
 				continue;
 			}
 
@@ -980,7 +982,7 @@ void Monster::onThinkYell(uint32_t interval)
 	if (yellTicks >= mType->yellSpeedTicks) {
 		yellTicks = 0;
 
-		if (!mType->voiceVector.empty() && (mType->yellChance >= (uint32_t)uniform_random(1, 100))) {
+		if (!mType->voiceVector.empty() && (mType->yellChance >= static_cast<uint32_t>(uniform_random(1, 100)))) {
 			uint32_t index = uniform_random(0, mType->voiceVector.size() - 1);
 			const voiceBlock_t& vb = mType->voiceVector[index];
 
@@ -1126,7 +1128,7 @@ bool Monster::getNextStep(Direction& dir, uint32_t& flags)
 			if (attackedCreature && attackedCreature == followCreature) {
 				if (isFleeing()) {
 					result = getDanceStep(getPosition(), dir, false, false);
-				} else if (mType->staticAttackChance < (uint32_t)uniform_random(1, 100)) {
+				} else if (mType->staticAttackChance < static_cast<uint32_t>(uniform_random(1, 100))) {
 					result = getDanceStep(getPosition(), dir);
 				}
 			}

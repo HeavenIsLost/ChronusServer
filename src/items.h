@@ -74,7 +74,7 @@ struct Abilities {
 
 		conditionImmunities = 0;
 		conditionSuppressions = 0;
-	};
+	}
 
 	//elemental damage
 	CombatType_t elementType;
@@ -200,15 +200,13 @@ class ItemType
 		Abilities* abilities;
 		Condition* condition;
 
-		float weight;
-
+		uint32_t weight;
 		uint32_t levelDoor;
 		uint32_t decayTime;
 		uint32_t wieldInfo;
 		uint32_t minReqLevel;
 		uint32_t minReqMagicLevel;
 		uint32_t charges;
-		uint32_t shootRange;
 		int32_t breakChance;
 		int32_t hitChance;
 		int32_t maxHitChance;
@@ -233,8 +231,6 @@ class ItemType
 		uint16_t slotPosition;
 		uint16_t speed;
 		uint16_t wareId;
-		uint16_t lightLevel;
-		uint16_t lightColor;
 
 		MagicEffectClasses magicEffect;
 		Direction bedPartnerDir;
@@ -246,6 +242,9 @@ class ItemType
 		FluidTypes_t fluidSource;
 
 		uint8_t alwaysOnTopOrder;
+		uint8_t lightLevel;
+		uint8_t lightColor;
+		uint8_t shootRange;
 
 		bool floorChangeDown;
 		bool floorChangeNorth;

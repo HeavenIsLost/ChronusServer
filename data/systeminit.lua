@@ -4,5 +4,7 @@ dofile("data/reloadsystem.lua")
 -- and you it can reloaded with /reload lib
 reloadSystem:addEntry("Lib", {"lib"}, "data/lib/lib.lua")
 
+reloadSystem:addEntry("System", {"system"}, "data/system/systems.lua")
+
 --the last thing, will load all files for the first time
 reloadSystem:executeAllEntrys()
