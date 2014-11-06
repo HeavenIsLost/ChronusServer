@@ -117,3 +117,7 @@ end
 function Player:getMissionDescription(descriptionId)
 	return  missionDescription:onMissionDescription(self, descriptionId)
 end
+
+function Player:onGainSkillTries(skill, tries)
+	return tries * self:getRate(skill)
+end
