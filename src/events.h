@@ -56,6 +56,7 @@ class Events
 		void eventPlayerOnGainExperience(Player* player, Creature* source, uint64_t& exp, uint64_t rawExp);
 		void eventPlayerOnLoseExperience(Player* player, uint64_t& exp);
 		void eventPlayerGetMissionDescription(Player* player, std::string &description);
+		void eventPlayerOnGainSkillTries(Player* player, skills_t skill, uint32_t& tries);
 
 	private:
 		LuaScriptInterface scriptInterface;
@@ -82,6 +83,7 @@ class Events
 		int32_t playerOnGainExperience;
 		int32_t playerOnLoseExperience;
 		int32_t playerGetMissionDescription;
+		int32_t playerOnGainSkillTries;
 };
 
 #endif

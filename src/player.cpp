@@ -621,14 +621,15 @@ int32_t Player::getSkill(skills_t skilltype, skillsid_t skillinfo) const
 
 void Player::addSkillAdvance(skills_t skill, uint32_t count)
 {
-	if (count == 0) {
-		return;
-	}
-
 	uint64_t currReqTries = vocation->getReqSkillTries(skill, skills[skill][SKILLVALUE_LEVEL]);
 	uint64_t nextReqTries = vocation->getReqSkillTries(skill, skills[skill][SKILLVALUE_LEVEL] + 1);
 	if (currReqTries >= nextReqTries) {
 		//player has reached max skill
+		return;
+	}
+
+	g_events->eventPlayerOnGainSkillTries(this, skill, count);
+	if (count == 0) {
 		return;
 	}
 
@@ -1993,7 +1994,7 @@ void Player::onBlockHit()
 		--shieldBlockCount;
 
 		if (hasShield()) {
-			addSkillAdvance(SKILL_SHIELD, rates[SKILL_SHIELD]);
+			addSkillAdvance(SKILL_SHIELD, 1);
 		}
 	}
 }
