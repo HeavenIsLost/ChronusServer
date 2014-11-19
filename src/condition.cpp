@@ -1163,7 +1163,7 @@ bool ConditionDamage::doDamage(Creature* creature, int32_t healthChange)
 	damage.primary.type = Combat::ConditionToDamageType(conditionType);
 
 	Creature* attacker = g_game.getCreatureByID(owner);
-	if (!creature->isAttackable() || Combat::canDoCombat(attacker, creature) != RETURNVALUE_NOERROR) {
+	if (!creature->isAttackable() || Combat::canDoCombat(attacker, creature, true) != RETURNVALUE_NOERROR) {
 		if (!creature->isInGhostMode()) {
 			g_game.addMagicEffect(creature->getPosition(), CONST_ME_POFF);
 		}
