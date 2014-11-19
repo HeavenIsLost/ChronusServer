@@ -635,7 +635,7 @@ void CreatureEvent::executeExtendedOpcode(Player* player, uint8_t opcode, const 
 
 bool CreatureEvent::executeCombat(Creature* creature, Creature* target, bool aggressive)
 {
-	//onCombat(cid, target, isAgressive)
+	//onCombat(creature, target, isAgressive)
 	if (!m_scriptInterface->reserveScriptEnv()) {
 		std::cout << "[Error - CreatureEvent::executeOnCombat] Call stack overflow" << std::endl;
 		return false;
@@ -647,8 +647,10 @@ bool CreatureEvent::executeCombat(Creature* creature, Creature* target, bool agg
 	lua_State* L = m_scriptInterface->getLuaState();
 
 	m_scriptInterface->pushFunction(m_scriptId);
-	lua_pushnumber(L, creature->getID());
-	lua_pushnumber(L, target->getID());
+	LuaScriptInterface::pushUserdata(L, creature);
+	LuaScriptInterface::setCreatureMetatable(L, -1, creature);
+	LuaScriptInterface::pushUserdata(L, creature);
+	LuaScriptInterface::setCreatureMetatable(L, -1, target);
 	lua_pushboolean(L, aggressive);
 
 	return m_scriptInterface->callFunction(3);
@@ -656,7 +658,7 @@ bool CreatureEvent::executeCombat(Creature* creature, Creature* target, bool agg
 
 bool CreatureEvent::executeCombatArea(Creature* creature, Tile* tile, bool aggressive)
 {
-	//onCombatArea(cid, position, isAgressive)
+	//onCombatArea(creature, position, isAgressive)
 	if (!m_scriptInterface->reserveScriptEnv()) {
 		std::cout << "[Error - CreatureEvent::executeCombatArea] Call stack overflow" << std::endl;
 		return false;
@@ -668,7 +670,8 @@ bool CreatureEvent::executeCombatArea(Creature* creature, Tile* tile, bool aggre
 	lua_State* L = m_scriptInterface->getLuaState();
 
 	m_scriptInterface->pushFunction(m_scriptId);
-	lua_pushnumber(L, creature->getID());
+	LuaScriptInterface::pushUserdata(L, creature);
+	LuaScriptInterface::setCreatureMetatable(L, -1, creature);
 	m_scriptInterface->pushPosition(L, tile->getPosition(), 0);
 	lua_pushboolean(L, aggressive);
 
