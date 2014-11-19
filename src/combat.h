@@ -294,7 +294,7 @@ class Combat
 
 		static ReturnValue canTargetCreature(Player* attacker, Creature* target);
 		static ReturnValue canDoCombat(Creature* caster, Tile* tile, bool isAggressive);
-		static ReturnValue canDoCombat(Creature* attacker, Creature* target, bool isAggressive;
+		static ReturnValue canDoCombat(Creature* attacker, Creature* target, bool isAggressive);
 
 		static void postCombatEffects(Creature* caster, const Position& pos, const CombatParams& params);
 
