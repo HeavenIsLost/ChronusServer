@@ -315,7 +315,7 @@ class LuaScriptInterface
 		template<class T>
 		inline static T** getRawUserdata(lua_State* L, int32_t arg)
 		{
-			return static_cast<T**>(lua_touserdata(L, arg));
+			return reinterpret_cast<T**>(lua_touserdata(L, arg));
 		}
 
 		inline static bool getBoolean(lua_State* L, int32_t arg)
@@ -729,6 +729,7 @@ class LuaScriptInterface
 		static int32_t luaItemGetPosition(lua_State* L);
 		static int32_t luaItemGetTile(lua_State* L);
 
+		static int32_t luaItemHasAttribute(lua_State* L);
 		static int32_t luaItemGetAttribute(lua_State* L);
 		static int32_t luaItemSetAttribute(lua_State* L);
 		static int32_t luaItemRemoveAttribute(lua_State* L);
@@ -1131,16 +1132,20 @@ class LuaScriptInterface
 
 		static int32_t luaItemTypeGetType(lua_State* L);
 		static int32_t luaItemTypeGetId(lua_State* L);
+		static int32_t luaItemTypeGetClientId(lua_State* L);
 		static int32_t luaItemTypeGetName(lua_State* L);
 		static int32_t luaItemTypeGetPluralName(lua_State* L);
 		static int32_t luaItemTypeGetArticle(lua_State* L);
 		static int32_t luaItemTypeGetDescription(lua_State* L);
 		static int32_t luaItemTypeGetSlotPosition(lua_State *L);
 
+		static int32_t luaItemTypeGetCharges(lua_State* L);
 		static int32_t luaItemTypeGetFluidSource(lua_State* L);
 		static int32_t luaItemTypeGetCapacity(lua_State* L);
 		static int32_t luaItemTypeGetWeight(lua_State* L);
 
+		static int32_t luaItemTypeGetHitChance(lua_State* L);
+		static int32_t luaItemTypeGetShootRange(lua_State* L);
 		static int32_t luaItemTypeGetAttack(lua_State* L);
 		static int32_t luaItemTypeGetDefense(lua_State* L);
 		static int32_t luaItemTypeGetExtraDefense(lua_State* L);

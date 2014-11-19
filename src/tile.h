@@ -196,10 +196,10 @@ class Tile : public Cylinder
 		const CreatureVector* getCreatures() const;
 		CreatureVector* makeCreatures();
 
-		virtual int32_t getThrowRange() const {
+		int32_t getThrowRange() const final {
 			return 0;
 		}
-		virtual bool isPushable() const {
+		bool isPushable() const final {
 			return false;
 		}
 
@@ -209,11 +209,9 @@ class Tile : public Cylinder
 		Mailbox* getMailbox() const;
 		BedItem* getBedItem() const;
 
-		Creature* getTopCreature();
-		const Creature* getTopCreature() const;
+		Creature* getTopCreature() const;
 		const Creature* getBottomCreature() const;
-		Creature* getTopVisibleCreature(const Creature* creature);
-		const Creature* getTopVisibleCreature(const Creature* creature) const;
+		Creature* getTopVisibleCreature(const Creature* creature) const;
 		const Creature* getBottomVisibleCreature(const Creature* creature) const;
 		Item* getTopTopItem();
 		Item* getTopDownItem();
@@ -295,7 +293,7 @@ class Tile : public Cylinder
 
 		bool hasHeight(uint32_t n) const;
 
-		virtual std::string getDescription(int32_t lookDistance) const;
+		std::string getDescription(int32_t lookDistance) const final;
 
 		void moveCreature(Creature* creature, Cylinder* toCylinder, bool forceTeleport = false);
 		int32_t getClientIndexOfCreature(const Player* player, const Creature* creature) const;
@@ -303,39 +301,39 @@ class Tile : public Cylinder
 		int32_t getStackposOfThing(const Player* player, const Thing* thing) const;
 
 		//cylinder implementations
-		virtual ReturnValue __queryAdd(int32_t index, const Thing* thing, uint32_t count,
-		                               uint32_t flags, Creature* actor = nullptr) const;
-		virtual ReturnValue __queryMaxCount(int32_t index, const Thing* thing, uint32_t count,
-		                                    uint32_t& maxQueryCount, uint32_t flags) const;
-		virtual ReturnValue __queryRemove(const Thing* thing, uint32_t count, uint32_t flags) const;
-		virtual Cylinder* __queryDestination(int32_t& index, const Thing* thing, Item** destItem,
-		                                     uint32_t& flags);
+		ReturnValue __queryAdd(int32_t index, const Thing* thing, uint32_t count,
+			uint32_t flags, Creature* actor = nullptr) const override;
+		ReturnValue __queryMaxCount(int32_t index, const Thing* thing, uint32_t count,
+			uint32_t& maxQueryCount, uint32_t flags) const final;
+		ReturnValue __queryRemove(const Thing* thing, uint32_t count, uint32_t flags) const final;
+		Cylinder* __queryDestination(int32_t& index, const Thing* thing, Item** destItem,
+			uint32_t& flags) override;
 
-		virtual void __addThing(Thing* thing);
-		virtual void __addThing(int32_t index, Thing* thing);
+		void __addThing(Thing* thing) final;
+		void __addThing(int32_t index, Thing* thing) override;
 
-		virtual void __updateThing(Thing* thing, uint16_t itemId, uint32_t count);
-		virtual void __replaceThing(uint32_t index, Thing* thing);
+		void __updateThing(Thing* thing, uint16_t itemId, uint32_t count) final;
+		void __replaceThing(uint32_t index, Thing* thing) final;
 
-		virtual void __removeThing(Thing* thing, uint32_t count);
+		void __removeThing(Thing* thing, uint32_t count) final;
 
-		virtual int32_t __getIndexOfThing(const Thing* thing) const;
-		virtual int32_t __getFirstIndex() const;
-		virtual int32_t __getLastIndex() const;
-		virtual uint32_t __getItemTypeCount(uint16_t itemId, int32_t subType = -1) const;
-		virtual Thing* __getThing(size_t index) const;
+		int32_t __getIndexOfThing(const Thing* thing) const final;
+		int32_t __getFirstIndex() const final;
+		int32_t __getLastIndex() const final;
+		uint32_t __getItemTypeCount(uint16_t itemId, int32_t subType = -1) const final;
+		Thing* __getThing(size_t index) const final;
 
-		virtual void postAddNotification(Thing* thing, const Cylinder* oldParent, int32_t index, cylinderlink_t link = LINK_OWNER);
-		virtual void postRemoveNotification(Thing* thing, const Cylinder* newParent, int32_t index, bool isCompleteRemoval, cylinderlink_t link = LINK_OWNER);
+		void postAddNotification(Thing* thing, const Cylinder* oldParent, int32_t index, cylinderlink_t link = LINK_OWNER) final;
+		void postRemoveNotification(Thing* thing, const Cylinder* newParent, int32_t index, bool isCompleteRemoval, cylinderlink_t link = LINK_OWNER) final;
 
-		virtual void __internalAddThing(Thing* thing);
-		virtual void __internalAddThing(uint32_t index, Thing* thing);
+		void __internalAddThing(Thing* thing) final;
+		void __internalAddThing(uint32_t index, Thing* thing) override;
 
 		const Position& getPosition() const {
 			return tilePos;
 		}
 
-		virtual bool isRemoved() const {
+		bool isRemoved() const final {
 			return false;
 		}
 
@@ -396,7 +394,7 @@ class DynamicTile : public Tile
 };
 
 // For blocking tiles, where we very rarely actually have items
-class StaticTile : public Tile
+class StaticTile final : public Tile
 {
 	// We very rarely even need the vectors, so don't keep them in memory
 	TileItemVector* items;
@@ -446,55 +444,49 @@ inline Tile::~Tile()
 inline CreatureVector* Tile::getCreatures()
 {
 	if (is_dynamic()) {
-		return static_cast<DynamicTile*>(this)->DynamicTile::getCreatures();
+		return reinterpret_cast<DynamicTile*>(this)->DynamicTile::getCreatures();
 	}
-
-	return static_cast<StaticTile*>(this)->StaticTile::getCreatures();
+	return reinterpret_cast<StaticTile*>(this)->StaticTile::getCreatures();
 }
 
 inline const CreatureVector* Tile::getCreatures() const
 {
 	if (is_dynamic()) {
-		return static_cast<const DynamicTile*>(this)->DynamicTile::getCreatures();
+		return reinterpret_cast<const DynamicTile*>(this)->DynamicTile::getCreatures();
 	}
-
-	return static_cast<const StaticTile*>(this)->StaticTile::getCreatures();
+	return reinterpret_cast<const StaticTile*>(this)->StaticTile::getCreatures();
 }
 
 inline TileItemVector* Tile::getItemList()
 {
 	if (is_dynamic()) {
-		return static_cast<DynamicTile*>(this)->DynamicTile::getItemList();
+		return reinterpret_cast<DynamicTile*>(this)->DynamicTile::getItemList();
 	}
-
-	return static_cast<StaticTile*>(this)->StaticTile::getItemList();
+	return reinterpret_cast<StaticTile*>(this)->StaticTile::getItemList();
 }
 
 inline const TileItemVector* Tile::getItemList() const
 {
 	if (is_dynamic()) {
-		return static_cast<const DynamicTile*>(this)->DynamicTile::getItemList();
+		return reinterpret_cast<const DynamicTile*>(this)->DynamicTile::getItemList();
 	}
-
-	return static_cast<const StaticTile*>(this)->StaticTile::getItemList();
+	return reinterpret_cast<const StaticTile*>(this)->StaticTile::getItemList();
 }
 
 inline CreatureVector* Tile::makeCreatures()
 {
 	if (is_dynamic()) {
-		return static_cast<DynamicTile*>(this)->DynamicTile::makeCreatures();
+		return reinterpret_cast<DynamicTile*>(this)->DynamicTile::makeCreatures();
 	}
-
-	return static_cast<StaticTile*>(this)->StaticTile::makeCreatures();
+	return reinterpret_cast<StaticTile*>(this)->StaticTile::makeCreatures();
 }
 
 inline TileItemVector* Tile::makeItemList()
 {
 	if (is_dynamic()) {
-		return static_cast<DynamicTile*>(this)->DynamicTile::makeItemList();
+		return reinterpret_cast<DynamicTile*>(this)->DynamicTile::makeItemList();
 	}
-
-	return static_cast<StaticTile*>(this)->StaticTile::makeItemList();
+	return reinterpret_cast<StaticTile*>(this)->StaticTile::makeItemList();
 }
 
 inline StaticTile::StaticTile(uint16_t x, uint16_t y, uint16_t z) :

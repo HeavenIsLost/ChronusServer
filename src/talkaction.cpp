@@ -51,7 +51,7 @@ LuaScriptInterface& TalkActions::getScriptInterface()
 	return m_scriptInterface;
 }
 
-std::string TalkActions::getScriptBaseName()
+std::string TalkActions::getScriptBaseName() const
 {
 	return "talkactions";
 }
@@ -66,7 +66,7 @@ Event* TalkActions::getEvent(const std::string& nodeName)
 
 bool TalkActions::registerEvent(Event* event, const pugi::xml_node&)
 {
-	talkActions.push_back(static_cast<TalkAction*>(event));
+	talkActions.push_back(reinterpret_cast<TalkAction*>(event));
 	return true;
 }
 
@@ -180,12 +180,12 @@ bool TalkAction::configureEvent(const pugi::xml_node& node)
 	return true;
 }
 
-std::string TalkAction::getScriptEventName()
+std::string TalkAction::getScriptEventName() const
 {
 	return "onSay";
 }
 
-bool TalkAction::executeSay(const Player* player, const std::string& words, const std::string& param, SpeakClasses type) const
+bool TalkAction::executeSay(Player* player, const std::string& words, const std::string& param, SpeakClasses type) const
 {
 	//onSay(player, words, param, type)
 	if (!m_scriptInterface->reserveScriptEnv()) {
@@ -200,7 +200,7 @@ bool TalkAction::executeSay(const Player* player, const std::string& words, cons
 
 	m_scriptInterface->pushFunction(m_scriptId);
 
-	LuaScriptInterface::pushUserdata<Player>(L, const_cast<Player*>(player));
+	LuaScriptInterface::pushUserdata<Player>(L, player);
 	LuaScriptInterface::setMetatable(L, -1, "Player");
 
 	LuaScriptInterface::pushString(L, words);
