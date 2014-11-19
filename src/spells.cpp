@@ -123,7 +123,7 @@ LuaScriptInterface& Spells::getScriptInterface()
 	return m_scriptInterface;
 }
 
-std::string Spells::getScriptBaseName()
+std::string Spells::getScriptBaseName() const
 {
 	return "spells";
 }
@@ -834,7 +834,8 @@ void Spell::postCastSpell(Player* player, bool finishedCast /*= true*/, bool pay
 void Spell::postCastSpell(Player* player, uint32_t manaCost, uint32_t soulCost) const
 {
 	if (manaCost > 0) {
-		player->addManaSpent(manaCost * player->getRate(SKILL_MAGLEVEL));
+		player->addManaSpent(manaCost);
+
 		player->changeMana(-static_cast<int32_t>(manaCost));
 	}
 
@@ -919,7 +920,7 @@ InstantSpell::~InstantSpell()
 	//
 }
 
-std::string InstantSpell::getScriptEventName()
+std::string InstantSpell::getScriptEventName() const
 {
 	return "onCastSpell";
 }
@@ -1663,7 +1664,7 @@ ConjureSpell::~ConjureSpell()
 	//
 }
 
-std::string ConjureSpell::getScriptEventName()
+std::string ConjureSpell::getScriptEventName() const
 {
 	return "onCastSpell";
 }
@@ -1789,7 +1790,7 @@ RuneSpell::~RuneSpell()
 	//
 }
 
-std::string RuneSpell::getScriptEventName()
+std::string RuneSpell::getScriptEventName() const
 {
 	return "onCastSpell";
 }

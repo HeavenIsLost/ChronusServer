@@ -70,7 +70,7 @@ LuaScriptInterface& Weapons::getScriptInterface()
 	return m_scriptInterface;
 }
 
-std::string Weapons::getScriptBaseName()
+std::string Weapons::getScriptBaseName() const
 {
 	return "weapons";
 }
@@ -128,7 +128,7 @@ Event* Weapons::getEvent(const std::string& nodeName)
 
 bool Weapons::registerEvent(Event* event, const pugi::xml_node&)
 {
-	Weapon* weapon = static_cast<Weapon*>(event);
+	Weapon* weapon = reinterpret_cast<Weapon*>(event);
 	if (weapons.find(weapon->getID()) != weapons.end()) {
 		std::cout << "[Warning - Weapons::registerEvent] Duplicate registered item with id: " << weapon->getID() << std::endl;
 		return false;
@@ -295,7 +295,7 @@ bool Weapon::configureWeapon(const ItemType& it)
 	return true;
 }
 
-std::string Weapon::getScriptEventName()
+std::string Weapon::getScriptEventName() const
 {
 	return "onUseWeapon";
 }
@@ -452,7 +452,8 @@ void Weapon::onUsedWeapon(Player* player, Item* item) const
 
 	uint32_t manaCost = getManaCost(player);
 	if (manaCost != 0) {
-		player->addManaSpent(manaCost * player->getRate(SKILL_MAGLEVEL));
+		player->addManaSpent(manaCost);
+
 		player->changeMana(-static_cast<int32_t>(manaCost));
 	}
 

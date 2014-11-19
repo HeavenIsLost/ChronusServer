@@ -379,28 +379,19 @@ HouseTransferItem* HouseTransferItem::createHouseTransferItem(House* house)
 	return transferItem;
 }
 
-bool HouseTransferItem::onTradeEvent(TradeEvents_t event, Player* owner)
+void HouseTransferItem::onTradeEvent(TradeEvents_t event, Player* owner)
 {
-	switch (event) {
-		case ON_TRADE_TRANSFER: {
-			House* house = getHouse();
-			if (house) {
-				house->executeTransfer(this, owner);
-			}
-
-			g_game.internalRemoveItem(this, 1);
-			break;
+	if (event == ON_TRADE_TRANSFER) {
+		if (house) {
+			house->executeTransfer(this, owner);
 		}
 
-		case ON_TRADE_CANCEL: {
-			House* house = getHouse();
-			if (house) {
-				house->resetTransferItem();
-			}
-			break;
+		g_game.internalRemoveItem(this, 1);
+	} else if (event == ON_TRADE_CANCEL) {
+		if (house) {
+			house->resetTransferItem();
 		}
 	}
-	return true;
 }
 
 bool House::executeTransfer(HouseTransferItem* item, Player* newOwner)
@@ -561,17 +552,16 @@ Door::~Door()
 
 Attr_ReadValue Door::readAttr(AttrTypes_t attr, PropStream& propStream)
 {
-	if (ATTR_HOUSEDOORID == attr) {
+	if (attr == ATTR_HOUSEDOORID) {
 		uint8_t _doorId;
-		if (!propStream.GET_UCHAR(_doorId)) {
+		if (!propStream.read<uint8_t>(_doorId)) {
 			return ATTR_READ_ERROR;
 		}
 
 		setDoorId(_doorId);
 		return ATTR_READ_CONTINUE;
-	} else {
-		return Item::readAttr(attr, propStream);
 	}
+	return Item::readAttr(attr, propStream);
 }
 
 bool Door::serializeAttr(PropWriteStream&) const
@@ -624,9 +614,9 @@ bool Door::getAccessList(std::string& list) const
 	return true;
 }
 
-void Door::stealAttributes(Item* item)
+void Door::moveAttributes(Item* item)
 {
-	Item::stealAttributes(item);
+	Item::moveAttributes(item);
 
 	if (Door* door = item->getDoor()) {
 		std::string list;

@@ -52,7 +52,7 @@ LuaScriptInterface& CreatureEvents::getScriptInterface()
 	return m_scriptInterface;
 }
 
-std::string CreatureEvents::getScriptBaseName()
+std::string CreatureEvents::getScriptBaseName() const
 {
 	return "creaturescripts";
 }
@@ -67,7 +67,7 @@ Event* CreatureEvents::getEvent(const std::string& nodeName)
 
 bool CreatureEvents::registerEvent(Event* event, const pugi::xml_node&)
 {
-	CreatureEvent* creatureEvent = static_cast<CreatureEvent*>(event);
+	CreatureEvent* creatureEvent = reinterpret_cast<CreatureEvent*>(event);
 	if (creatureEvent->getEventType() == CREATURE_EVENT_NONE) {
 		std::cout << "Error: [CreatureEvents::registerEvent] Trying to register event without type!" << std::endl;
 		return false;
@@ -219,7 +219,7 @@ bool CreatureEvent::configureEvent(const pugi::xml_node& node)
 	return true;
 }
 
-std::string CreatureEvent::getScriptEventName()
+std::string CreatureEvent::getScriptEventName() const
 {
 	//Depending on the type script event name is different
 	switch (m_type) {
@@ -428,8 +428,8 @@ bool CreatureEvent::executeOnDeath(Creature* creature, Item* corpse, Creature* k
 		lua_pushnil(L);
 	}
 
-	lua_pushboolean(L, lastHitUnjustified);
-	lua_pushboolean(L, mostDamageUnjustified);
+	LuaScriptInterface::pushBoolean(L, lastHitUnjustified);
+	LuaScriptInterface::pushBoolean(L, mostDamageUnjustified);
 
 	return m_scriptInterface->callFunction(6);
 }

@@ -86,7 +86,17 @@ enum AttrTypes_t {
 	ATTR_SLEEPERGUID = 20,
 	ATTR_SLEEPSTART = 21,
 	ATTR_CHARGES = 22,
-	ATTR_CONTAINER_ITEMS = 23
+	ATTR_CONTAINER_ITEMS = 23,
+	ATTR_NAME = 24,
+	ATTR_ARTICLE = 25,
+	ATTR_PLURALNAME = 26,
+	ATTR_WEIGHT = 27,
+	ATTR_ATTACK = 28,
+	ATTR_DEFENSE = 29,
+	ATTR_EXTRADEFENSE = 30,
+	ATTR_ARMOR = 31,
+	ATTR_HITCHANCE = 32,
+	ATTR_SHOOTRANGE = 33
 };
 
 enum Attr_ReadValue {
@@ -124,7 +134,7 @@ class ItemAttributes
 			removeAttribute(ITEM_ATTRIBUTE_DATE);
 		}
 		time_t getDate() const {
-			return (time_t)getIntAttr(ITEM_ATTRIBUTE_DATE);
+			return static_cast<time_t>(getIntAttr(ITEM_ATTRIBUTE_DATE));
 		}
 
 		void setWriter(const std::string& _writer) {
@@ -201,7 +211,7 @@ class ItemAttributes
 			setIntAttr(ITEM_ATTRIBUTE_DECAYSTATE, decayState);
 		}
 		ItemDecayState_t getDecaying() const {
-			return (ItemDecayState_t)getIntAttr(ITEM_ATTRIBUTE_DECAYSTATE);
+			return static_cast<ItemDecayState_t>(getIntAttr(ITEM_ATTRIBUTE_DECAYSTATE));
 		}
 
 	protected:
@@ -214,16 +224,16 @@ class ItemAttributes
 
 		struct Attribute
 		{
-			uint8_t* value;
+			std::string* value;
 			itemAttrTypes type;
 
 			Attribute(itemAttrTypes type) : value(nullptr), type(type) {}
 			Attribute(const Attribute& i) {
 				type = i.type;
-				if (ItemAttributes::validateIntAttrType(type)) {
+				if (ItemAttributes::isIntAttrType(type)) {
 					value = i.value;
-				} else if (ItemAttributes::validateStrAttrType(type)) {
-					value = (uint8_t*)new std::string( *((std::string*)i.value) );
+				} else if (ItemAttributes::isStrAttrType(type)) {
+					value = new std::string(*i.value);
 				} else {
 					value = nullptr;
 				}
@@ -233,8 +243,8 @@ class ItemAttributes
 				attribute.type = ITEM_ATTRIBUTE_NONE;
 			}
 			~Attribute() {
-				if (ItemAttributes::validateStrAttrType(type)) {
-					delete (std::string*)value;
+				if (ItemAttributes::isStrAttrType(type)) {
+					delete value;
 				}
 			}
 			Attribute& operator=(Attribute other) {
@@ -243,8 +253,8 @@ class ItemAttributes
 			}
 			Attribute& operator=(Attribute&& other) {
 				if (this != &other) {
-					if (ItemAttributes::validateStrAttrType(type)) {
-						delete (std::string*)value;
+					if (ItemAttributes::isStrAttrType(type)) {
+						delete value;
 					}
 
 					value = other.value;
@@ -271,14 +281,18 @@ class ItemAttributes
 		void setIntAttr(itemAttrTypes type, int32_t value);
 		void increaseIntAttr(itemAttrTypes type, int32_t value);
 
-		static bool validateIntAttrType(itemAttrTypes type);
-		static bool validateStrAttrType(itemAttrTypes type);
-
 		void addAttr(Attribute* attr);
-		Attribute* getAttrConst(itemAttrTypes type) const;
+		const Attribute* getExistingAttr(itemAttrTypes type) const;
 		Attribute& getAttr(itemAttrTypes type);
 
 	public:
+		inline static bool isIntAttrType(itemAttrTypes type) {
+			return (type & 0x7FFE13) != 0;
+		}
+		inline static bool isStrAttrType(itemAttrTypes type) {
+			return (type & 0x1EC) != 0;
+		}
+
 		const std::forward_list<Attribute>& getList() const {
 			return attributes;
 		}
@@ -298,23 +312,17 @@ class Item : virtual public Thing
 		Item(const uint16_t _type, uint16_t _count = 0);
 		Item(const Item& i);
 		virtual Item* clone() const;
-		virtual void stealAttributes(Item* item);
+		virtual void moveAttributes(Item* item);
 
-		virtual ~Item();
+		~Item();
 
 		bool equals(const Item* otherItem) const;
 
-		virtual Item* getItem() {
+		Item* getItem() final {
 			return this;
 		}
-		virtual const Item* getItem() const {
+		const Item* getItem() const final {
 			return this;
-		}
-		virtual Container* getContainer() {
-			return nullptr;
-		}
-		virtual const Container* getContainer() const {
-			return nullptr;
 		}
 		virtual Teleport* getTeleport() {
 			return nullptr;
@@ -412,7 +420,7 @@ class Item : virtual public Thing
 			removeAttribute(ITEM_ATTRIBUTE_DATE);
 		}
 		time_t getDate() const {
-			return (time_t)getIntAttr(ITEM_ATTRIBUTE_DATE);
+			return static_cast<time_t>(getIntAttr(ITEM_ATTRIBUTE_DATE));
 		}
 
 		void setWriter(const std::string& _writer) {
@@ -504,30 +512,30 @@ class Item : virtual public Thing
 		}
 		ItemDecayState_t getDecaying() const {
 			if (!attributes) {
-				return (ItemDecayState_t)0;
+				return DECAYING_FALSE;
 			}
-			return (ItemDecayState_t)getIntAttr(ITEM_ATTRIBUTE_DECAYSTATE);
+			return static_cast<ItemDecayState_t>(getIntAttr(ITEM_ATTRIBUTE_DECAYSTATE));
 		}
 
 		static std::string getDescription(const ItemType& it, int32_t lookDistance, const Item* item = nullptr, int32_t subType = -1, bool addArticle = true);
 		static std::string getNameDescription(const ItemType& it, const Item* item = nullptr, int32_t subType = -1, bool addArticle = true);
 		static std::string getWeightDescription(const ItemType& it, uint32_t weight, uint32_t count = 1);
 
-		virtual std::string getDescription(int32_t lookDistance) const;
+		std::string getDescription(int32_t lookDistance) const final;
 		std::string getNameDescription() const;
 		std::string getWeightDescription() const;
 
 		//serialization
 		virtual Attr_ReadValue readAttr(AttrTypes_t attr, PropStream& propStream);
-		virtual bool unserializeAttr(PropStream& propStream);
+		bool unserializeAttr(PropStream& propStream);
 		virtual bool unserializeItemNode(FileLoader& f, NODE node, PropStream& propStream);
 
 		virtual bool serializeAttr(PropWriteStream& propWriteStream) const;
 
-		virtual bool isPushable() const {
+		bool isPushable() const final {
 			return isMoveable();
 		}
-		virtual int32_t getThrowRange() const {
+		int32_t getThrowRange() const final {
 			return (isPickupable() ? 15 : 2);
 		}
 
@@ -543,8 +551,7 @@ class Item : virtual public Thing
 		void setID(uint16_t newid);
 
 		// Returns the player that is holding this item in his inventory
-		Player* getHoldingPlayer();
-		const Player* getHoldingPlayer() const;
+		Player* getHoldingPlayer() const;
 
 		WeaponType_t getWeaponType() const {
 			return items[id].weaponType;
@@ -553,26 +560,50 @@ class Item : virtual public Thing
 			return items[id].ammoType;
 		}
 		uint8_t getShootRange() const {
+			if (hasAttribute(ITEM_ATTRIBUTE_SHOOTRANGE)) {
+				return getIntAttr(ITEM_ATTRIBUTE_SHOOTRANGE);
+			}
 			return items[id].shootRange;
 		}
 
 		virtual uint32_t getWeight() const;
+		uint32_t getBaseWeight() const {
+			if (hasAttribute(ITEM_ATTRIBUTE_WEIGHT)) {
+				return getIntAttr(ITEM_ATTRIBUTE_WEIGHT);
+			}
+			return items[id].weight;
+		}
 		int32_t getAttack() const {
+			if (hasAttribute(ITEM_ATTRIBUTE_ATTACK)) {
+				return getIntAttr(ITEM_ATTRIBUTE_ATTACK);
+			}
 			return items[id].attack;
 		}
 		int32_t getArmor() const {
+			if (hasAttribute(ITEM_ATTRIBUTE_ARMOR)) {
+				return getIntAttr(ITEM_ATTRIBUTE_ARMOR);
+			}
 			return items[id].armor;
 		}
 		int32_t getDefense() const {
+			if (hasAttribute(ITEM_ATTRIBUTE_DEFENSE)) {
+				return getIntAttr(ITEM_ATTRIBUTE_DEFENSE);
+			}
 			return items[id].defense;
 		}
 		int32_t getExtraDefense() const {
+			if (hasAttribute(ITEM_ATTRIBUTE_EXTRADEFENSE)) {
+				return getIntAttr(ITEM_ATTRIBUTE_EXTRADEFENSE);
+			}
 			return items[id].extraDefense;
 		}
 		int32_t getSlotPosition() const {
 			return items[id].slotPosition;
 		}
-		int32_t getHitChance() const {
+		int8_t getHitChance() const {
+			if (hasAttribute(ITEM_ATTRIBUTE_HITCHANCE)) {
+				return getIntAttr(ITEM_ATTRIBUTE_HITCHANCE);
+			}
 			return items[id].hitChance;
 		}
 
@@ -666,12 +697,21 @@ class Item : virtual public Thing
 		}
 
 		const std::string& getName() const {
+			if (hasAttribute(ITEM_ATTRIBUTE_NAME)) {
+				return getStrAttr(ITEM_ATTRIBUTE_NAME);
+			}
 			return items[id].name;
 		}
 		const std::string getPluralName() const {
+			if (hasAttribute(ITEM_ATTRIBUTE_PLURALNAME)) {
+				return getStrAttr(ITEM_ATTRIBUTE_PLURALNAME);
+			}
 			return items[id].getPluralName();
 		}
 		const std::string& getArticle() const {
+			if (hasAttribute(ITEM_ATTRIBUTE_ARTICLE)) {
+				return getStrAttr(ITEM_ATTRIBUTE_ARTICLE);
+			}
 			return items[id].article;
 		}
 
@@ -709,9 +749,7 @@ class Item : virtual public Thing
 			return true;
 		}
 		virtual void onRemoved();
-		virtual bool onTradeEvent(TradeEvents_t, Player*) {
-			return true;
-		}
+		virtual void onTradeEvent(TradeEvents_t, Player*) {}
 
 		virtual void __startDecaying();
 
