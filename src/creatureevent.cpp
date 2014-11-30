@@ -649,7 +649,7 @@ bool CreatureEvent::executeCombat(Creature* creature, Creature* target, bool agg
 	m_scriptInterface->pushFunction(m_scriptId);
 	LuaScriptInterface::pushUserdata(L, creature);
 	LuaScriptInterface::setCreatureMetatable(L, -1, creature);
-	LuaScriptInterface::pushUserdata(L, creature);
+	LuaScriptInterface::pushUserdata(L, target);
 	LuaScriptInterface::setCreatureMetatable(L, -1, target);
 	lua_pushboolean(L, aggressive);
 
