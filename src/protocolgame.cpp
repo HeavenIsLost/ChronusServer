@@ -3177,6 +3177,8 @@ void ProtocolGame::AddShopItem(NetworkMessage& msg, const ShopInfo& item)
 
 	if (it.isSplash() || it.isFluidContainer()) {
 		msg.AddByte(serverFluidToClient(item.subType));
+	} else if (it.charges > 0){
+		msg.AddByte(it.charges);
 	} else {
 		msg.AddByte(0x00);
 	}
