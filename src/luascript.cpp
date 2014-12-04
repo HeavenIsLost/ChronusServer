@@ -2210,6 +2210,7 @@ void LuaScriptInterface::registerFunctions()
 	registerMethod("Creature", "changeSpeed", LuaScriptInterface::luaCreatureChangeSpeed);
 
 	registerMethod("Creature", "setDropLoot", LuaScriptInterface::luaCreatureSetDropLoot);
+	registerMethod("Creature", "setLossSkill", LuaScriptInterface::luaCreatureSetLossSkill);
 
 	registerMethod("Creature", "getPosition", LuaScriptInterface::luaCreatureGetPosition);
 	registerMethod("Creature", "getTile", LuaScriptInterface::luaCreatureGetTile);
@@ -7579,6 +7580,20 @@ int32_t LuaScriptInterface::luaCreatureSetDropLoot(lua_State* L)
 		creature->setDropLoot(getBoolean(L, 2));
 		pushBoolean(L, true);
 	} else {
+		lua_pushnil(L);
+	}
+	return 1;
+}
+
+int32_t LuaScriptInterface::luaCreatureSetLossSkill(lua_State* L)
+{
+	// creature:setLossSkill(doLoss)
+	Creature* creature = getUserdata<Creature>(L, 1);
+	if (creature) {
+		creature->setLossSkill(getBoolean(L, 2));
+		pushBoolean(L, true);
+	}
+	else {
 		lua_pushnil(L);
 	}
 	return 1;
