@@ -446,6 +446,8 @@ void ProtocolGame::parsePacket(NetworkMessage& msg)
 		return;
 	}
 
+	msg.get<uint32_t>();
+
 	uint8_t recvbyte = msg.GetByte();
 
 	if (!player) {
@@ -3153,6 +3155,8 @@ void ProtocolGame::AddShopItem(NetworkMessage& msg, const ShopInfo& item)
 
 	if (it.isSplash() || it.isFluidContainer()) {
 		msg.AddByte(serverFluidToClient(item.subType));
+	} else if (it.charges > 0 || it.stackable) {
+		msg.AddByte(item.subType);
 	} else {
 		msg.AddByte(0x00);
 	}
