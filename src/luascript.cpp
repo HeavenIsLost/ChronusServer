@@ -8571,7 +8571,7 @@ int32_t LuaScriptInterface::luaPlayerGetSkillLevel(lua_State* L)
 	skills_t skillType = getNumber<skills_t>(L, 2);
 	Player* player = getUserdata<Player>(L, 1);
 	if (player && skillType <= SKILL_LAST) {
-		lua_pushnumber(L, player->skills[skillType][SKILLVALUE_LEVEL]);
+		lua_pushnumber(L, player->skills[skillType].level);
 	} else {
 		lua_pushnil(L);
 	}
@@ -8584,7 +8584,7 @@ int32_t LuaScriptInterface::luaPlayerGetEffectiveSkillLevel(lua_State* L)
 	skills_t skillType = getNumber<skills_t>(L, 2);
 	Player* player = getUserdata<Player>(L, 1);
 	if (player && skillType <= SKILL_LAST) {
-		lua_pushnumber(L, player->getSkill(skillType, SKILLVALUE_LEVEL));
+		lua_pushnumber(L, player->getSkillLevel(skillType));
 	} else {
 		lua_pushnil(L);
 	}
@@ -8597,7 +8597,7 @@ int32_t LuaScriptInterface::luaPlayerGetSkillPercent(lua_State* L)
 	skills_t skillType = getNumber<skills_t>(L, 2);
 	Player* player = getUserdata<Player>(L, 1);
 	if (player && skillType <= SKILL_LAST) {
-		lua_pushnumber(L, player->skills[skillType][SKILLVALUE_PERCENT]);
+		lua_pushnumber(L, player->skills[skillType].percent);
 	} else {
 		lua_pushnil(L);
 	}
@@ -8610,7 +8610,7 @@ int32_t LuaScriptInterface::luaPlayerGetSkillTries(lua_State* L)
 	skills_t skillType = getNumber<skills_t>(L, 2);
 	Player* player = getUserdata<Player>(L, 1);
 	if (player && skillType <= SKILL_LAST) {
-		lua_pushnumber(L, player->skills[skillType][SKILLVALUE_TRIES]);
+		lua_pushnumber(L, player->skills[skillType].tries);
 	} else {
 		lua_pushnil(L);
 	}
@@ -8623,7 +8623,7 @@ int32_t LuaScriptInterface::luaPlayerAddSkillTries(lua_State* L)
 	Player* player = getUserdata<Player>(L, 1);
 	if (player) {
 		skills_t skillType = getNumber<skills_t>(L, 2);
-		uint32_t tries = getNumber<uint32_t>(L, 3);
+		uint64_t tries = getNumber<uint64_t>(L, 3);
 		player->addSkillAdvance(skillType, tries);
 		pushBoolean(L, true);
 	} else {
@@ -10691,8 +10691,8 @@ int32_t LuaScriptInterface::luaVocationGetRequiredSkillTries(lua_State* L)
 	// vocation:getRequiredSkillTries(skillType, skillLevel)
 	Vocation* vocation = getUserdata<Vocation>(L, 1);
 	if (vocation) {
-		int32_t skillType = getNumber<int32_t>(L, 2);
-		int32_t skillLevel = getNumber<int32_t>(L, 3);
+		skills_t skillType = getNumber<skills_t>(L, 2);
+		uint16_t skillLevel = getNumber<uint16_t>(L, 3);
 		lua_pushnumber(L, vocation->getReqSkillTries(skillType, skillLevel));
 	} else {
 		lua_pushnil(L);
