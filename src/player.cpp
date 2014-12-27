@@ -3759,6 +3759,10 @@ void Player::gainExperience(uint64_t gainExp, Creature* source)
 		return;
 	}
 
+	if (source && !source->getPlayer()) {
+		useStamina();
+	}
+
 	uint64_t oldExperience = experience;
 	addExperience(source, gainExp, true, true, true);
 
@@ -3779,16 +3783,10 @@ void Player::onGainExperience(uint64_t gainExp, Creature* target)
 		return;
 	}
 
-	if (target) {
-		if (gainExp > 0 && target->getMonster()) {
-			useStamina();
-		}
-
-		if (!target->getPlayer() && party && party->isSharedExperienceActive() && party->isSharedExperienceEnabled()) {
-			party->shareExperience(gainExp, target);
-			//We will get a share of the experience through the sharing mechanism
-			return;
-		}
+	if (target && !target->getPlayer() && party && party->isSharedExperienceActive() && party->isSharedExperienceEnabled()) {
+		party->shareExperience(gainExp, target);
+		//We will get a share of the experience through the sharing mechanism
+		return;
 	}
 
 	Creature::onGainExperience(gainExp, target);
