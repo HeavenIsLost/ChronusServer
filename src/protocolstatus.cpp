@@ -113,7 +113,7 @@ void ProtocolStatus::sendStatusString()
 	serverinfo.append_attribute("uptime") = std::to_string(uptime).c_str();
 	serverinfo.append_attribute("ip") = g_config.getString(ConfigManager::IP).c_str();
 	serverinfo.append_attribute("servername") = g_config.getString(ConfigManager::SERVER_NAME).c_str();
-	serverinfo.append_attribute("port") = std::to_string(g_config.getNumber(ConfigManager::LOGIN_PORT)).c_str();
+	serverinfo.append_attribute("port") = std::to_string((uint32_t)g_config.getNumber(ConfigManager::LOGIN_PORT)).c_str();
 	serverinfo.append_attribute("location") = g_config.getString(ConfigManager::LOCATION).c_str();
 	serverinfo.append_attribute("url") = g_config.getString(ConfigManager::URL).c_str();
 	serverinfo.append_attribute("server") = STATUS_SERVER_NAME;
@@ -126,7 +126,7 @@ void ProtocolStatus::sendStatusString()
 
 	pugi::xml_node players = tsqp.append_child("players");
 	players.append_attribute("online") = std::to_string(g_game.getPlayersOnline()).c_str();
-	players.append_attribute("max") = std::to_string(g_config.getNumber(ConfigManager::MAX_PLAYERS)).c_str();
+	players.append_attribute("max") = std::to_string((uint32_t)g_config.getNumber(ConfigManager::MAX_PLAYERS)).c_str();
 	players.append_attribute("peak") = std::to_string(g_game.getPlayersRecord()).c_str();
 
 	pugi::xml_node monsters = tsqp.append_child("monsters");
@@ -136,11 +136,11 @@ void ProtocolStatus::sendStatusString()
 	npcs.append_attribute("total") = std::to_string(g_game.getNpcsOnline()).c_str();
 
 	pugi::xml_node rates = tsqp.append_child("rates");
-	rates.append_attribute("experience") = std::to_string(g_config.getNumber(ConfigManager::RATE_EXPERIENCE)).c_str();
-	rates.append_attribute("skill") = std::to_string(g_config.getNumber(ConfigManager::RATE_SKILL)).c_str();
-	rates.append_attribute("loot") = std::to_string(g_config.getNumber(ConfigManager::RATE_LOOT)).c_str();
-	rates.append_attribute("magic") = std::to_string(g_config.getNumber(ConfigManager::RATE_MAGIC)).c_str();
-	rates.append_attribute("spawn") = std::to_string(g_config.getNumber(ConfigManager::RATE_SPAWN)).c_str();
+	rates.append_attribute("experience") = std::to_string((uint32_t)g_config.getNumber(ConfigManager::RATE_EXPERIENCE)).c_str();
+	rates.append_attribute("skill") = std::to_string((uint32_t)g_config.getNumber(ConfigManager::RATE_SKILL)).c_str();
+	rates.append_attribute("loot") = std::to_string((uint32_t)g_config.getNumber(ConfigManager::RATE_LOOT)).c_str();
+	rates.append_attribute("magic") = std::to_string((uint32_t)g_config.getNumber(ConfigManager::RATE_MAGIC)).c_str();
+	rates.append_attribute("spawn") = std::to_string((uint32_t)g_config.getNumber(ConfigManager::RATE_SPAWN)).c_str();
 
 	pugi::xml_node map = tsqp.append_child("map");
 	map.append_attribute("name") = g_config.getString(ConfigManager::MAP_NAME).c_str();
@@ -175,7 +175,7 @@ void ProtocolStatus::sendInfo(uint16_t requestedInfo, const std::string& charact
 		output->AddByte(0x10);
 		output->AddString(g_config.getString(ConfigManager::SERVER_NAME));
 		output->AddString(g_config.getString(ConfigManager::IP));
-		output->AddString(std::to_string(g_config.getNumber(ConfigManager::LOGIN_PORT)));
+		output->AddString(std::to_string((uint32_t)g_config.getNumber(ConfigManager::LOGIN_PORT)));
 	}
 
 	if (requestedInfo & REQUEST_OWNER_SERVER_INFO) {
@@ -195,7 +195,7 @@ void ProtocolStatus::sendInfo(uint16_t requestedInfo, const std::string& charact
 	if (requestedInfo & REQUEST_PLAYERS_INFO) {
 		output->AddByte(0x20);
 		output->add<uint32_t>(g_game.getPlayersOnline());
-		output->add<uint32_t>(g_config.getNumber(ConfigManager::MAX_PLAYERS));
+		output->add<uint32_t>((uint32_t)g_config.getNumber(ConfigManager::MAX_PLAYERS));
 		output->add<uint32_t>(g_game.getPlayersRecord());
 	}
 
